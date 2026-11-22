@@ -18,17 +18,16 @@ package eu.faircode.email;
 */
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.style.DynamicDrawableSpan;
 import android.text.style.ForegroundColorSpan;
-import android.text.style.ImageSpan;
 import android.text.style.RelativeSizeSpan;
+import android.text.style.ReplacementSpan;
 import android.text.style.StyleSpan;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -378,19 +377,8 @@ public class ExtHooks {
             if (icon != null) {
                 icon = icon.mutate();
                 icon.setTint(Helper.resolveColor(context, androidx.appcompat.R.attr.colorAccent));
-                // Sized as it's drawn, as FairEmail sets the row's text size after this.
-                ImageSpan span = new ImageSpan(icon, Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-                        ? DynamicDrawableSpan.ALIGN_CENTER : DynamicDrawableSpan.ALIGN_BASELINE) {
-                    @Override
-                    public int getSize(@NonNull Paint paint, CharSequence text, int start, int end, Paint.FontMetricsInt fm) {
-                        int size = Math.round(paint.getTextSize());
-                        getDrawable().setBounds(0, 0, size, size);
-                        return super.getSize(paint, text, start, end, fm);
-                    }
-                };
                 out.append("@");
-                out.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                out.append(" ");
+                out.setSpan(new IconSpan(icon), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
             out.append(route.destination);
         });
@@ -409,6 +397,33 @@ public class ExtHooks {
             out.setSpan(new RelativeSizeSpan(0.85f), start, out.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         });
         return changed == null ? text : changed;
+    }
+
+    /**
+     * An icon in a line of text, as tall as the text and centred on it, with a gap after it. Sized as it's drawn,
+     * as FairEmail sets the row's text size afterwards, and the gap is part of it, so it isn't underlined.
+     */
+    private static class IconSpan extends ReplacementSpan {
+        private final Drawable icon;
+
+        IconSpan(Drawable icon) {
+            this.icon = icon;
+        }
+
+        @Override
+        public int getSize(@NonNull Paint paint, CharSequence text, int start, int end, Paint.FontMetricsInt fm) {
+            return Math.round(paint.getTextSize() * 1.25f);
+        }
+
+        @Override
+        public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, @NonNull Paint paint) {
+            int size = Math.round(paint.getTextSize());
+            Paint.FontMetricsInt fm = paint.getFontMetricsInt();
+            int left = Math.round(x);
+            int iconTop = y + (fm.ascent + fm.descent) / 2 - size / 2;
+            icon.setBounds(left, iconTop, left + size, iconTop + size);
+            icon.draw(canvas);
+        }
     }
 
     private interface RouteWriter {
