@@ -28,9 +28,12 @@ jobs:
     outputs:
       merged: ${{ steps.merge.outputs.merged }}
     steps:
+      # The token isn't kept in the checkout, so the build below, which runs FairEmail's code and its
+      # dependencies, can't use it to write to this repository. Only the last step gets it.
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Merge FairEmail's updates
         id: merge
@@ -102,7 +105,7 @@ jobs:
         run: |
           # FairEmail's own workflow files can't be pushed with this job's token. If this fails for that reason,
           # merge on your own computer instead.
-          git push --force origin "$UPDATE_BRANCH"
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$UPDATE_BRANCH"
           if [ -z "$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$UPDATE_BRANCH" --state open --json number --jq '.[].number')" ]; then
             gh pr create --repo "$GITHUB_REPOSITORY" --base "${GITHUB_REF_NAME}" --head "$UPDATE_BRANCH" \
               --title "Merge FairEmail's updates" \

@@ -86,3 +86,5 @@ Then `./gradlew assembleGithubRelease`. Keep the key safe: updates must be signe
 
 - Gmail and Outlook sign-in (OAuth) is registered to FairEmail itself, so it doesn't work in a fork. Use an app password, or IMAP and SMTP with a password, for those accounts.
 - The extensions' text is English only.
+- The check before sending runs when you tap Send in the compose screen. A reply typed straight into a notification, and replies FairEmail sends by itself from a rule, aren't checked.
+- The addy.io settings, API key included, are in a file of their own on the phone, not in FairEmail's settings. So they're not in FairEmail's log, debug info, exports or cloud sync, and you enter the key again on a new phone.

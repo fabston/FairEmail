@@ -450,9 +450,9 @@ public class ExtHooks {
      */
     static void addNavMenu(AppCompatActivity activity, List<NavMenuItem> menus, Runnable closeDrawer) {
         // FairEmail rebuilds its main screen when one of these settings changes, so the section comes and goes with the key.
-        if (!Arrays.asList(FragmentOptions.OPTIONS_RESTART).contains(AddyStore.PREF_KEY)) {
+        if (!Arrays.asList(FragmentOptions.OPTIONS_RESTART).contains(AddyStore.PREF_SET_UP)) {
             List<String> restart = new ArrayList<>(Arrays.asList(FragmentOptions.OPTIONS_RESTART));
-            restart.add(AddyStore.PREF_KEY);
+            restart.add(AddyStore.PREF_SET_UP);
             FragmentOptions.OPTIONS_RESTART = restart.toArray(new String[0]);
         }
         if (!AddyStore.isSetUp(activity))

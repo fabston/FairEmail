@@ -6,7 +6,7 @@
     <string name="ext_addy_settings" translatable="false">addy.io</string>
     <string name="ext_addy_summary" translatable="false">Send from your addy.io aliases, and get stopped before an email shows your real address.</string>
     <string name="ext_addy_key" translatable="false">addy.io API key</string>
-    <string name="ext_addy_key_hint" translatable="false">Create one under Settings → API Keys on addy.io. It\'s kept with FairEmail\'s other settings, so use one you can revoke.</string>
+    <string name="ext_addy_key_hint" translatable="false">Create one under Settings → API Keys on addy.io. It\'s kept on this phone only, apart from FairEmail\'s settings, so it isn\'t in exports, logs or debug info. Use one you can revoke.</string>
     <string name="ext_addy_server" translatable="false">Server</string>
     <string name="ext_addy_server_hint" translatable="false">Only change this if you host addy.io yourself.</string>
     <string name="ext_addy_guard" translatable="false">Check emails before sending</string>

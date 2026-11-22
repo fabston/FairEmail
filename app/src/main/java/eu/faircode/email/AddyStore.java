@@ -32,11 +32,19 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/** The addy.io extension's settings, and a short-lived copy of your account details, kept in FairEmail's settings. */
+/**
+ * The addy.io extension's settings, and a short-lived copy of your account details. Kept in a file of their own,
+ * as FairEmail writes its own settings, with their values, to its log, its debug info and its exports, and these
+ * hold your API key, your real addresses and your aliases.
+ */
 public class AddyStore {
+    private static final String FILE = "ext_addy";
+    // The only thing in FairEmail's own settings: whether there's a key, so its main screen is rebuilt when that changes.
+    static final String PREF_SET_UP = "ext_addy_set_up";
     static final String PREF_KEY = "ext_addy_apikey";
     static final String PREF_URL = "ext_addy_url";
     static final String PREF_GUARD = "ext_addy_guard";
@@ -46,8 +54,41 @@ public class AddyStore {
     private static final String PREF_CONFIRMED = "ext_addy_confirmed";
     private static final long ACCOUNT_FRESH_MS = 60 * 60 * 1000L;
 
+    private static boolean moved;
+
     static SharedPreferences prefs(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences own = context.getSharedPreferences(FILE, Context.MODE_PRIVATE);
+        synchronized (AddyStore.class) {
+            if (!moved) {
+                moved = true;
+                moveFromFairEmail(context, own);
+            }
+        }
+        return own;
+    }
+
+    /** Earlier versions kept these in FairEmail's own settings. They're moved once, and removed from there. */
+    private static void moveFromFairEmail(Context context, SharedPreferences own) {
+        SharedPreferences fair = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor to = own.edit();
+        SharedPreferences.Editor from = fair.edit();
+        boolean found = false;
+        for (Map.Entry<String, ?> entry : fair.getAll().entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            if (key == null || !key.startsWith("ext_addy_") || PREF_SET_UP.equals(key))
+                continue;
+            found = true;
+            if (value instanceof String)
+                to.putString(key, (String) value);
+            else if (value instanceof Boolean)
+                to.putBoolean(key, (Boolean) value);
+            from.remove(key);
+        }
+        if (found) {
+            to.apply();
+            from.apply();
+        }
     }
 
     static boolean isSetUp(Context context) {
@@ -80,6 +121,7 @@ public class AddyStore {
     static void forget(Context context) {
         aliasesChanged();
         prefs(context).edit().remove(PREF_ACCOUNT).remove(PREF_CONFIRMED).apply();
+        PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(PREF_SET_UP, isSetUp(context)).apply();
     }
 
     private static List<String> strings(JSONArray array) {
