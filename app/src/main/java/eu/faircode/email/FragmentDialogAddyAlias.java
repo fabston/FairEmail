@@ -230,7 +230,7 @@ public class FragmentDialogAddyAlias extends FragmentDialogBase {
                     List<String> domains = new ArrayList<>(account.domains);
                     if (domains.remove(account.defaultDomain))
                         domains.add(0, account.defaultDomain);
-                    AddyCompose.setDropdown(spDomain, domains);
+                    ExtHooks.setDropdown(spDomain, domains);
                 }
                 showRoute();
             }

@@ -2320,7 +2320,7 @@ public class FragmentCompose extends FragmentBase {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (ExtHooks.onComposeMenu(this, item, etTo.getText().toString())) // Plus
+        if (ExtHooks.onComposeMenu(this, item, etTo, etBody)) // Plus
             return true;
         int itemId = item.getItemId();
         if (itemId == android.R.id.home) {

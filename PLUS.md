@@ -16,13 +16,25 @@ Set up under **Settings → Integrations → Extensions → addy.io**.
   - **New alias** (`addnew`): a name or a random one in your chosen format, a description and a domain. The address is copied, and **Send from it** starts an email from it.
   - **Send from an alias** (`addsend`): choose who it's to (suggested from FairEmail's contacts) and the alias, in either order. An alias you type that doesn't exist yet is offered too, for catch-all domains. It opens a new email with To and From already set.
 
+### AI writing
+
+Set up under **Settings → Integrations → Extensions → AI writing**, with your own OpenAI or Anthropic API key. Each service keeps its own key and model, so you can switch between them. Ported from the Betterbird add-on.
+
+- In the compose screen, **⋮ → Rewrite with AI**: **Fix spelling & grammar**, **Improve writing**, **Make shorter**, **More formal**, **More friendly**, **Translate** (the last language you chose is offered first), or **Say what to change** in your own words.
+- It works on your selection, or else on everything you wrote. Quoted mail and your signature are kept apart from it by FairEmail, so they aren't sent, unless you've chosen **Edit plain text** or **Edit formatted text** on the quoted mail, which makes it part of your text.
+- Your text is replaced straight away, and **Undo** in the message at the bottom puts it back. If you edit the text while the AI is working, your changes aren't overwritten.
+- Your bold, italics, lists and links are kept. The AI can reword your text, but it can't add links, images, scripts or styling that weren't there.
+- Only the text you rewrite is sent, only to the service you chose, and only when you choose an action. The key is kept apart from FairEmail's settings, like addy.io's.
+
+This is separate from FairEmail's own AI feature (the robot icon), which writes new text from a prompt and adds it below your cursor.
+
 ## How it fits into FairEmail
 
-All extension code is in new files: `Addy*.java`, `ExtHooks.java`, `FragmentAddyAliases.java`, `FragmentDialogAddy*.java`, `res/layout/*ext*`, `res/values/strings_ext.xml`, and the tests in `app/src/test`. FairEmail's own files only call into `ExtHooks`, from a line or two each, marked `Plus`:
+All extension code is in new files: `Addy*.java`, `Ai*.java`, `ExtHooks.java`, `ExtHttp.java`, `FragmentAddyAliases.java`, `FragmentDialogAddy*.java`, `FragmentDialogAiSettings.java`, `res/layout/*ext*`, `res/values/strings_ext.xml`, and the tests in `app/src/test`. FairEmail's own files only call into `ExtHooks`, from a line or two each, marked `Plus`:
 
 | File | What the line does |
 | --- | --- |
-| `FragmentCompose.java` | Runs the extensions' checks with FairEmail's pre-send check, shows the send dialog if they found anything, adds and handles the compose menu entry, and listens for the alias dialog's result |
+| `FragmentCompose.java` | Runs the extensions' checks with FairEmail's pre-send check, shows the send dialog if they found anything, adds and handles the compose menu entries (addy.io alias, Rewrite with AI), and listens for the alias dialog's result |
 | `FragmentDialogSend.java` | Shows what the checks found at the top of the send dialog |
 | `FragmentOptionsIntegrations.java` | Adds the Extensions card to the Integrations settings |
 | `ActivityView.java` | Adds the addy.io section to the side menu |
@@ -37,7 +49,7 @@ To find them all: `git grep -n "Plus"` in those files.
 ```
 git fetch upstream
 git merge upstream/master     # conflicts can only be in the lines above
-./gradlew testGithubDebugUnitTest --tests 'eu.faircode.email.Addy*'
+./gradlew testGithubDebugUnitTest --tests 'eu.faircode.email.Addy*' --tests 'eu.faircode.email.Ai*'
 ./gradlew assembleGithubRelease
 ```
 

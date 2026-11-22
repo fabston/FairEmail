@@ -31,4 +31,10 @@
     <string name="ext_addy_create_alias" translatable="false">Create</string>
     <string name="ext_addy_start_email" translatable="false">Start email</string>
     <string name="ext_addy_send_from_it" translatable="false">Send from it</string>
+    <string name="ext_ai_title" translatable="false">AI writing</string>
+    <string name="ext_ai_summary" translatable="false">Fix, improve, shorten, change the tone of or translate what you write, with OpenAI or Claude and your own API key.</string>
+    <string name="ext_ai_rewrite" translatable="false">Rewrite with AI</string>
+    <string name="ext_ai_provider" translatable="false">Service</string>
+    <string name="ext_ai_key" translatable="false">API key</string>
+    <string name="ext_ai_model" translatable="false">Model</string>
 </resources>

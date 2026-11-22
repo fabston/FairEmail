@@ -22,8 +22,6 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.fragment.app.FragmentActivity;
@@ -44,17 +42,6 @@ public class AddyCompose {
         } catch (Throwable ex) {
             return null;
         }
-    }
-
-    /**
-     * Fills a dropdown the way FairEmail's own settings do: compact when closed, a roomier list when open. The list
-     * opens below the field rather than on top of it, so what's chosen stays in view.
-     */
-    static <T> void setDropdown(Spinner spinner, List<T> items) {
-        ArrayAdapter<T> adapter = new ArrayAdapter<>(spinner.getContext(), android.R.layout.simple_spinner_item, items);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        spinner.post(() -> spinner.setDropDownVerticalOffset(spinner.getHeight()));
     }
 
     static void copy(Context context, String label, String text) {

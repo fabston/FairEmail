@@ -83,7 +83,7 @@ public class FragmentAddyAliases extends FragmentBase {
         lvAliases = view.findViewById(R.id.lvAliases);
         Context context = view.getContext();
 
-        AddyCompose.setDropdown(spFilter, FILTERS);
+        ExtHooks.setDropdown(spFilter, FILTERS);
         spFilter.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(android.widget.AdapterView<?> parent, View v, int position, long id) {

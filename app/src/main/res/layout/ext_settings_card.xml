@@ -47,5 +47,22 @@
             android:layout_marginTop="6dp"
             android:text="@string/ext_addy_summary"
             android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+        <Button
+            android:id="@+id/btnExtAi"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:drawableStart="@drawable/twotone_auto_fix_high_24"
+            android:drawablePadding="6dp"
+            android:text="@string/ext_ai_title" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/ext_ai_summary"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

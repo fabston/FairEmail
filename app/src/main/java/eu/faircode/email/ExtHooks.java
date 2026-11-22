@@ -34,6 +34,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -73,6 +75,23 @@ public class ExtHooks {
     private static final String ARG_ROUTE_DESTINATIONS = "ext_route_destinations";
     static final String RESULT_COMPOSE = "ext:compose";
     private static final int MENU_ADDY = 0x7e570001;
+    private static final int MENU_AI = 0x7e570002;
+
+    // --- Shared -----------------------------------------------------------------------------------------------
+
+    /**
+     * Fills a dropdown the way FairEmail's own settings do: compact when closed, a roomier list when open. The list
+     * opens below the field rather than on top of it, so what's chosen stays in view.
+     */
+    static <T> void setDropdown(Spinner spinner, List<T> items) {
+        // Kept up to date whenever it's laid out, as in a dialog its height isn't known yet when it's filled.
+        if (spinner.getAdapter() == null)
+            spinner.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                    spinner.setDropDownVerticalOffset(bottom - top));
+        ArrayAdapter<T> adapter = new ArrayAdapter<>(spinner.getContext(), android.R.layout.simple_spinner_item, items);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+    }
 
     // --- Before sending ------------------------------------------------------------------------------------------
 
@@ -306,12 +325,20 @@ public class ExtHooks {
             // First in the menu, as it's what you'd use most when everything goes through addy.io.
             menu.add(Menu.NONE, MENU_ADDY, 0, "addy.io alias")
                     .setIcon(R.drawable.twotone_alternate_email_24);
+        if (menu.findItem(MENU_AI) == null)
+            menu.add(Menu.NONE, MENU_AI, 1, R.string.ext_ai_rewrite)
+                    .setIcon(R.drawable.twotone_auto_fix_high_24);
     }
 
-    /** True if an extension handled the menu item. to is what's in To right now. */
-    static boolean onComposeMenu(Fragment compose, MenuItem item, String to) {
+    /** True if an extension handled the menu item. etTo and etBody are the email's To and its text. */
+    static boolean onComposeMenu(Fragment compose, MenuItem item, TextView etTo, EditText etBody) {
+        if (item.getItemId() == MENU_AI) {
+            AiCompose.show(compose, etBody);
+            return true;
+        }
         if (item.getItemId() != MENU_ADDY)
             return false;
+        String to = etTo.getText().toString();
         Context context = compose.getContext();
         if (!AddyStore.isSetUp(context)) {
             new AlertDialog.Builder(context)
@@ -537,5 +564,7 @@ public class ExtHooks {
         scroll.addView(column);
         column.findViewById(R.id.btnExtAddy).setOnClickListener(v ->
                 new FragmentDialogAddySettings().show(fragment.getParentFragmentManager(), "ext:addy:settings"));
+        column.findViewById(R.id.btnExtAi).setOnClickListener(v ->
+                new FragmentDialogAiSettings().show(fragment.getParentFragmentManager(), "ext:ai:settings"));
     }
 }
