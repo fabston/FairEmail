@@ -10,6 +10,7 @@ Set up under **Settings → Integrations → Extensions → addy.io**.
 
 - **Check before sending**: runs with FairEmail's own checks when you tap Send. If an email would show your real address, FairEmail's send dialog opens with the reasons at the top, and **Send** sends anyway. The rules are the same as the Betterbird add-on's: someone not going through the alias, a reply that dropped the alias, your real address or name in the text, signature, quoted mail or subject, the wrong sender identity, signing or encryption, a Reply-To, the Free plan, and optionally any email that doesn't go through an alias at all.
 - **Send from an alias**: in the compose screen, **⋮ → addy.io alias**. Pick or create an alias, and To is rewritten so addy.io sends from it, and the identity is switched to one addy.io accepts if needed.
+- **Readable alias addresses**: mail sent or received through one of your aliases shows who it really reaches. In the message list, `mail+support=safetywing.com@…` becomes addy.io's @ icon and `support@safetywing.com`. In an opened message, it reads `support@safetywing.com via mail@…`. Only what's shown changes, so replies still go through the alias. When you send through an alias, the send dialog says who it's to and which alias it's from, too.
 - **The side menu's addy.io section**, shown only once an API key is set, below your folders. It does what the Alfred workflow's keywords do:
   - **addy.io aliases** (`addy`): search, filter by active, inactive, pinned or deleted, and see your plan, counts and bandwidth. Tap an alias for its actions: copy, send from it, pin, turn off or on, edit the description, delete or restore, open on addy.io. Long-press copies it.
   - **New alias** (`addnew`): a name or a random one in your chosen format, a description and a domain. The address is copied, and **Send from it** starts an email from it.
@@ -25,6 +26,7 @@ All extension code is in new files: `Addy*.java`, `ExtHooks.java`, `FragmentAddy
 | `FragmentDialogSend.java` | Shows what the checks found at the top of the send dialog |
 | `FragmentOptionsIntegrations.java` | Adds the Extensions card to the Integrations settings |
 | `ActivityView.java` | Adds the addy.io section to the side menu |
+| `AdapterMessage.java` | Shows addresses through your aliases as who they really reach, in the message list and an opened message's header |
 | `app/build.gradle` | The `.plus` app ID, JUnit for the tests, and a quoted native build flag, so it builds in a folder with a space in its name |
 
 To find them all: `git grep -n "Plus"` in those files.

@@ -232,6 +232,17 @@ public class AddyGuardTest {
     }
 
     @Test
+    public void routesShowWhoAnAliasEmailReallyReaches() {
+        AddyGuard.Input input = input(ALIAS_TO, "friend@example.com", "bounce+a=b.com@lists.example.com");
+        input.draft.cc = list("shop+x=y.com@johndoe.addy.io");
+        List<AddyAddresses.SendAddress> routes = AddyGuard.routes(input);
+        assertEquals(2, routes.size());
+        assertEquals("shop@johndoe.addy.io", routes.get(0).alias);
+        assertEquals("hello@store.com", routes.get(0).destination);
+        assertEquals("x@y.com", routes.get(1).destination);
+    }
+
+    @Test
     public void sharedDomainAliasesAreSentForConfirmation() {
         AddyGuard.Input input = input("x+a=b.com@anonaddy.me");
         input.account.sharedDomains = Collections.singletonList("anonaddy.me");

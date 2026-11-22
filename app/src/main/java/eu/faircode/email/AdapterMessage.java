@@ -1536,6 +1536,7 @@ public class AdapterMessage extends RecyclerView.Adapter<AdapterMessage.ViewHold
                                 ? MessageHelper.AddressFormat.EMAIL_NAME : email_format,
                         false));
             }
+            ExtHooks.showListAddresses(tvFrom, senders, recipients); // Plus
 
             tvFrom.setPaintFlags(tvFrom.getPaintFlags() & ~Paint.UNDERLINE_TEXT_FLAG);
             tvSize.setText(message.totalSize == null ? null : Helper.humanReadableByteCount(message.totalSize));
@@ -2673,7 +2674,7 @@ public class AdapterMessage extends RecyclerView.Adapter<AdapterMessage.ViewHold
             if (addresses.length > max)
                 ssb.append(context.getString(R.string.title_name_plus, "", addresses.length - max));
 
-            return ssb;
+            return ExtHooks.headerAddresses(context, ssb, addresses); // Plus
         }
 
         private void bindAddresses(TupleMessageEx message) {

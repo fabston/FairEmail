@@ -236,10 +236,7 @@ public class AddyGuard {
             return Collections.emptyList();
         Draft draft = input.draft;
         List<String> candidates = new ArrayList<>();
-        List<String> everyone = new ArrayList<>(draft.to);
-        everyone.addAll(draft.cc);
-        everyone.addAll(draft.bcc);
-        for (String address : everyone) {
+        for (String address : everyone(draft)) {
             AddyAddresses.SendAddress decoded = AddyAddresses.decodeSendAddress(address);
             candidates.add(decoded == null ? address : decoded.alias);
         }
@@ -271,8 +268,7 @@ public class AddyGuard {
         AddyAccount account = input.account;
         List<String> copies = new ArrayList<>(draft.cc);
         copies.addAll(draft.bcc);
-        List<String> everyone = new ArrayList<>(draft.to);
-        everyone.addAll(copies);
+        List<String> everyone = everyone(draft);
 
         List<String> throughAlias = new ArrayList<>();
         // Your own alias can come back on a reply all. Mail to it reaches only you, so it isn't a leak.
@@ -404,6 +400,23 @@ public class AddyGuard {
                     join(replyTo) + " is set as the Reply-To, which could reveal it. Check this identity's settings."));
 
         return problems;
+    }
+
+    /** Each recipient that goes through one of your aliases: the alias it's sent from, and who it really reaches. */
+    static List<AddyAddresses.SendAddress> routes(Input input) {
+        List<AddyAddresses.SendAddress> routes = new ArrayList<>();
+        for (String address : everyone(input.draft))
+            if (usesAlias(address, input))
+                routes.add(AddyAddresses.decodeSendAddress(address));
+        return routes;
+    }
+
+    /** Everyone the email goes to: To, Cc and Bcc. */
+    private static List<String> everyone(Draft draft) {
+        List<String> everyone = new ArrayList<>(draft.to);
+        everyone.addAll(draft.cc);
+        everyone.addAll(draft.bcc);
+        return everyone;
     }
 
     private static boolean contains(List<String> addresses, String address) {

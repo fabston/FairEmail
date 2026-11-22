@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /** The addy.io extension's settings, and a short-lived copy of your account details, kept in FairEmail's settings. */
@@ -139,7 +140,10 @@ public class AddyStore {
     }
 
     private static AddyAccount saved(Context context) {
-        String text = prefs(context).getString(PREF_ACCOUNT, null);
+        return parseAccount(prefs(context).getString(PREF_ACCOUNT, null));
+    }
+
+    private static AddyAccount parseAccount(String text) {
         if (text == null)
             return null;
         try {
@@ -147,6 +151,28 @@ public class AddyStore {
         } catch (Throwable ex) {
             return null;
         }
+    }
+
+    private static String ownedAccountText;
+    private static String ownedConfirmedText;
+    private static AddyAccount ownedAccount;
+    private static List<String> ownedConfirmed = new ArrayList<>();
+
+    /**
+     * Whether an alias is yours, going by what's saved, so without the network. Quick enough for every row of a
+     * list, as the saved copies are only read again once they've changed.
+     */
+    static synchronized boolean ownsSavedAlias(Context context, String alias) {
+        SharedPreferences prefs = prefs(context);
+        String account = prefs.getString(PREF_ACCOUNT, null);
+        String confirmed = prefs.getString(PREF_CONFIRMED, "[]");
+        if (!Objects.equals(account, ownedAccountText) || !Objects.equals(confirmed, ownedConfirmedText)) {
+            ownedAccount = parseAccount(account);
+            ownedConfirmed = parseConfirmed(confirmed);
+            ownedAccountText = account;
+            ownedConfirmedText = confirmed;
+        }
+        return AddyAddresses.ownsAlias(alias, ownedAccount, ownedConfirmed);
     }
 
     /**
@@ -231,9 +257,13 @@ public class AddyStore {
 
     /** Aliases addy.io has confirmed are yours, kept until your settings change. */
     static List<String> confirmed(Context context) {
+        return parseConfirmed(prefs(context).getString(PREF_CONFIRMED, "[]"));
+    }
+
+    private static List<String> parseConfirmed(String text) {
         List<String> list = new ArrayList<>();
         try {
-            JSONArray array = new JSONArray(prefs(context).getString(PREF_CONFIRMED, "[]"));
+            JSONArray array = new JSONArray(text);
             for (int i = 0; i < array.length(); i++)
                 list.add(array.getString(i));
         } catch (Throwable ignored) {
