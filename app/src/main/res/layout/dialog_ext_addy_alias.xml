@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FairEmail Plus: choose or create the alias to send from. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="12dp">
+
+    <TextView
+        android:id="@+id/tvRoute"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textIsSelectable="true" />
+
+    <EditText
+        android:id="@+id/etDestination"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/ext_addy_destination"
+        android:importantForAutofill="no"
+        android:inputType="textEmailAddress"
+        android:visibility="gone" />
+
+    <EditText
+        android:id="@+id/etSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawableStart="@drawable/twotone_search_24"
+        android:drawablePadding="6dp"
+        android:hint="@string/ext_addy_search"
+        android:imeOptions="actionSearch"
+        android:importantForAutofill="no"
+        android:inputType="textEmailAddress" />
+
+    <ProgressBar
+        android:id="@+id/pbWait"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="6dp" />
+
+    <ListView
+        android:id="@+id/lvAliases"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:layout_marginTop="6dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="@string/ext_addy_create"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/etLocal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/ext_addy_local"
+        android:importantForAutofill="no"
+        android:inputType="textEmailAddress" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Spinner
+            android:id="@+id/spDomain"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/btnCreate"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ext_addy_create_use" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="?attr/colorWarning"
+        android:visibility="gone" />
+</LinearLayout>

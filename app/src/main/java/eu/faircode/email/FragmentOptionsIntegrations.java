@@ -127,6 +127,7 @@ public class FragmentOptionsIntegrations extends FragmentBase implements SharedP
         setHasOptionsMenu(true);
 
         view = inflater.inflate(R.layout.fragment_options_integrations, container, false);
+        ExtHooks.addSettings(this, view); // Plus
 
         // Get controls
 

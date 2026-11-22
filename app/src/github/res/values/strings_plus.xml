@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FairEmail Plus: the name it shows, so it can't be confused with FairEmail itself. -->
+<resources>
+    <string name="app_name" translatable="false">FairEmail Plus</string>
+</resources>

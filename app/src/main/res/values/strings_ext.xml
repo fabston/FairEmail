@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FairEmail Plus: text for the extensions. English only for now. -->
+<resources>
+    <string name="ext_title" translatable="false">Extensions</string>
+    <string name="ext_hint" translatable="false">Added by FairEmail Plus. They only send anything when you use them.</string>
+    <string name="ext_addy_settings" translatable="false">addy.io</string>
+    <string name="ext_addy_summary" translatable="false">Send from your addy.io aliases, and get stopped before an email shows your real address.</string>
+    <string name="ext_addy_key" translatable="false">addy.io API key</string>
+    <string name="ext_addy_key_hint" translatable="false">Create one under Settings → API Keys on addy.io. It\'s kept with FairEmail\'s other settings, so use one you can revoke.</string>
+    <string name="ext_addy_server" translatable="false">Server</string>
+    <string name="ext_addy_server_hint" translatable="false">Only change this if you host addy.io yourself.</string>
+    <string name="ext_addy_guard" translatable="false">Check emails before sending</string>
+    <string name="ext_addy_guard_hint" translatable="false">Stops a send if it would show your real address, and says why. The email stays on your phone: only an alias that needs confirming as yours is looked up on addy.io.</string>
+    <string name="ext_addy_warn_direct" translatable="false">Also warn when an email doesn\'t go through an alias</string>
+    <string name="ext_addy_warn_direct_hint" translatable="false">Asks before any email goes out from your real address. It needs an API key.</string>
+    <string name="ext_addy_trusted" translatable="false">Send without asking to</string>
+    <string name="ext_addy_trusted_hint" translatable="false">Addresses or domains, one per line. Only the warning above skips them.</string>
+    <string name="ext_addy_save_test" translatable="false">Save and test</string>
+    <string name="ext_addy_alias_title" translatable="false">Send from an alias</string>
+    <string name="ext_addy_destination" translatable="false">Who\'s it to?</string>
+    <string name="ext_addy_search" translatable="false">Search your aliases</string>
+    <string name="ext_addy_create" translatable="false">Or create a new one</string>
+    <string name="ext_addy_local" translatable="false">Name, or leave empty for random</string>
+    <string name="ext_addy_create_use" translatable="false">Create and use</string>
+    <string name="ext_addy_nav_aliases" translatable="false">addy.io aliases</string>
+    <string name="ext_addy_nav_new" translatable="false">New alias</string>
+    <string name="ext_addy_nav_send" translatable="false">Send from an alias</string>
+    <string name="ext_addy_description" translatable="false">Description, like what it\'s for (optional)</string>
+    <string name="ext_addy_domain" translatable="false">Domain</string>
+    <string name="ext_addy_format" translatable="false">Format, when there\'s no name</string>
+    <string name="ext_addy_create_alias" translatable="false">Create</string>
+    <string name="ext_addy_start_email" translatable="false">Start email</string>
+    <string name="ext_addy_send_from_it" translatable="false">Send from it</string>
+</resources>

@@ -48,8 +48,9 @@ android {
 
         externalNativeBuild {
             cmake {
-                cFlags "-ffile-prefix-map=${rootDir}=."
-                cppFlags "-ffile-prefix-map=${rootDir}=."
+                // Plus: quoted, so it also works in a folder with a space in its name.
+                cFlags "\"-ffile-prefix-map=${rootDir}=.\""
+                cppFlags "\"-ffile-prefix-map=${rootDir}=.\""
             }
         }
 
@@ -203,6 +204,8 @@ android {
     productFlavors {
         github {
             dimension "all"
+            // Plus: its own app, so it installs next to FairEmail.
+            applicationIdSuffix ".plus"
             manifestPlaceholders.largeHeap = false
             manifestPlaceholders.build_uuid = UUID.nameUUIDFromBytes(("github" + getVersionCode() + getRevision()).getBytes()).toString();
             externalNativeBuild {
@@ -512,6 +515,9 @@ configurations.configureEach {
 }
 
 dependencies {
+    // Plus: unit tests for the extensions.
+    testImplementation "junit:junit:4.13.2"
+
     //implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     def desugar_version = "2.1.5"

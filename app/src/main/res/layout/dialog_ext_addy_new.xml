@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FairEmail Plus: create an alias. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="12dp">
+
+        <EditText
+            android:id="@+id/etLocal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/ext_addy_local"
+            android:importantForAutofill="no"
+            android:inputType="textEmailAddress" />
+
+        <EditText
+            android:id="@+id/etDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/ext_addy_description"
+            android:importantForAutofill="no"
+            android:inputType="textCapSentences" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/ext_addy_domain"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spDomain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tvFormat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/ext_addy_format"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spFormat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <ProgressBar
+            android:id="@+id/pbWait"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="6dp" />
+
+        <TextView
+            android:id="@+id/tvCreated"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:textIsSelectable="true"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="?attr/colorWarning"
+            android:visibility="gone" />
+    </LinearLayout>
+</ScrollView>

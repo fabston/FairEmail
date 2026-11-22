@@ -718,6 +718,8 @@ public class FragmentDialogSend extends FragmentDialogBase {
             }
         }.serial().execute(FragmentDialogSend.this, aargs, "send:archive");
 
+        ExtHooks.addToSendDialog(context, args, dview); // Plus
+
         AlertDialog.Builder builder = new AlertDialog.Builder(context)
                 .setView(dview)
                 .setNegativeButton(android.R.string.cancel, null);

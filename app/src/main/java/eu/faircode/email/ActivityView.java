@@ -970,6 +970,11 @@ public class ActivityView extends ActivityBilling implements FragmentManager.OnB
             }
         }));
 
+        ExtHooks.addNavMenu(this, menus, () -> { // Plus
+            if (!drawerLayout.isLocked(drawerContainer))
+                drawerLayout.closeDrawer(drawerContainer);
+        });
+
         adapterNavMenu.set(menus, nav_expanded);
 
         // Collapsible menus

@@ -1921,6 +1921,7 @@ public class FragmentCompose extends FragmentBase {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        ExtHooks.listenCompose(this, etTo, spIdentity); // Plus
 
         state = State.NONE;
 
@@ -2173,6 +2174,8 @@ public class FragmentCompose extends FragmentBase {
 
         MenuCompat.setGroupDividerEnabled(menu, true);
 
+        ExtHooks.onCreateComposeMenu(menu); // Plus
+
         super.onCreateOptionsMenu(menu, inflater);
     }
 
@@ -2317,6 +2320,8 @@ public class FragmentCompose extends FragmentBase {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        if (ExtHooks.onComposeMenu(this, item, etTo.getText().toString())) // Plus
+            return true;
         int itemId = item.getItemId();
         if (itemId == android.R.id.home) {
             onExit();
@@ -8007,6 +8012,9 @@ public class FragmentCompose extends FragmentBase {
                 } catch (Throwable ignored) {
                 }
 
+            if (action == R.id.action_check)
+                ExtHooks.checkDraft(context, args, draft, body); // Plus: outside the transaction, as it can use the network
+
             args.putBoolean("dirty", dirty);
             if (dirty)
                 ServiceSynchronize.eval(context, "compose/action");
@@ -8127,7 +8135,7 @@ public class FragmentCompose extends FragmentBase {
                 int recipients = (draft.to == null ? 0 : draft.to.length) +
                         (draft.cc == null ? 0 : draft.cc.length) +
                         (draft.bcc == null ? 0 : draft.bcc.length);
-                if (send_dialog || force_dialog ||
+                if (send_dialog || force_dialog || ExtHooks.hasProblems(args) /* Plus */ ||
                         sent_missing || address_error != null || mx_error != null ||
                         remind_dsn || remind_size || remind_pgp || remind_smime ||
                         remind_to || remind_noreply || remind_external ||

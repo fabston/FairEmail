@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FairEmail Plus: start an email from an alias. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="12dp">
+
+    <AutoCompleteTextView
+        android:id="@+id/etTo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:completionThreshold="1"
+        android:hint="@string/ext_addy_destination"
+        android:importantForAutofill="no"
+        android:inputType="textEmailAddress" />
+
+    <TextView
+        android:id="@+id/tvFrom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/etSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawableStart="@drawable/twotone_search_24"
+        android:drawablePadding="6dp"
+        android:hint="@string/ext_addy_search"
+        android:importantForAutofill="no"
+        android:inputType="textEmailAddress" />
+
+    <ProgressBar
+        android:id="@+id/pbWait"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="6dp" />
+
+    <ListView
+        android:id="@+id/lvAliases"
+        android:layout_width="match_parent"
+        android:layout_height="260dp"
+        android:layout_marginTop="6dp" />
+
+    <TextView
+        android:id="@+id/tvError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="?attr/colorWarning"
+        android:visibility="gone" />
+</LinearLayout>
