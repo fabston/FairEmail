@@ -63,7 +63,7 @@ public class FragmentDialogAddyNew extends FragmentDialogBase {
         final TextView tvCreated = view.findViewById(R.id.tvCreated);
         final TextView tvError = view.findViewById(R.id.tvError);
 
-        spFormat.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, FORMAT_NAMES));
+        AddyCompose.setDropdown(spFormat, FORMAT_NAMES);
         etLocal.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -104,7 +104,7 @@ public class FragmentDialogAddyNew extends FragmentDialogBase {
                 List<String> domains = new ArrayList<>(account.domains);
                 if (domains.remove(account.defaultDomain))
                     domains.add(0, account.defaultDomain);
-                spDomain.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, domains));
+                AddyCompose.setDropdown(spDomain, domains);
                 int format = FORMATS.indexOf(account.defaultFormat);
                 if (format >= 0)
                     spFormat.setSelection(format);

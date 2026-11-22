@@ -26,6 +26,7 @@ All extension code is in new files: `Addy*.java`, `ExtHooks.java`, `FragmentAddy
 | `FragmentDialogSend.java` | Shows what the checks found at the top of the send dialog |
 | `FragmentOptionsIntegrations.java` | Adds the Extensions card to the Integrations settings |
 | `ActivityView.java` | Adds the addy.io section to the side menu |
+| `app/src/github/.../ActivityBilling.java` | Lets a Pro code bought for FairEmail activate here too, as it's made for FairEmail's app ID |
 | `AdapterMessage.java` | Shows addresses through your aliases as who they really reach, in the message list and an opened message's header |
 | `app/build.gradle` | The `.plus` app ID, JUnit for the tests, and a quoted native build flag, so it builds in a folder with a space in its name |
 

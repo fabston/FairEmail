@@ -230,7 +230,7 @@ public class FragmentDialogAddyAlias extends FragmentDialogBase {
                     List<String> domains = new ArrayList<>(account.domains);
                     if (domains.remove(account.defaultDomain))
                         domains.add(0, account.defaultDomain);
-                    spDomain.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, domains));
+                    AddyCompose.setDropdown(spDomain, domains);
                 }
                 showRoute();
             }
