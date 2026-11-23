@@ -19,6 +19,7 @@ package eu.faircode.email;
 
 import android.content.Context;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -48,9 +49,28 @@ public class ExtHttp {
         }
     }
 
+    /** How much of a request's body has been sent, as it's sent. Throwing stops the request. */
+    interface Sending {
+        void sent(long bytes) throws IOException;
+    }
+
+    private static final int SLICE = 64 * 1024;
+    // No answer from these services is near this size, so anything longer is cut off, not held in memory.
+    private static final int MAX_ANSWER = 16 * 1024 * 1024;
+
     /** Sends a request and returns the answer, whatever its status. Throws if there's no answer at all. */
     static Response send(Context context, String service, String method, String url, Map<String, String> headers,
                          String body, String secret, int timeout) throws IOException {
+        return send(context, service, method, url, headers,
+                body == null ? null : body.getBytes(StandardCharsets.UTF_8), null, secret, timeout);
+    }
+
+    /**
+     * The same with a body of bytes, such as a file, streamed rather than buffered a second time, and reported to
+     * sending as it goes.
+     */
+    static Response send(Context context, String service, String method, String url, Map<String, String> headers,
+                         byte[] body, Sending sending, String secret, int timeout) throws IOException {
         URL target = new URL(url);
         // A key is never sent unencrypted, whatever the caller passes. Only this phone itself is exempt.
         boolean local = "localhost".equals(target.getHost()) || "127.0.0.1".equals(target.getHost());
@@ -71,11 +91,24 @@ public class ExtHttp {
             connection.setReadTimeout(timeout * 1000);
             ConnectionHelper.setUserAgent(context, connection);
             for (Map.Entry<String, String> header : headers.entrySet())
-                connection.setRequestProperty(header.getKey(), header.getValue());
+                try {
+                    connection.setRequestProperty(header.getKey(), header.getValue());
+                } catch (IllegalArgumentException ex) {
+                    // Its message quotes the value, which can be the key, so only the header's name is passed on.
+                    throw new IllegalArgumentException("The " + header.getKey() + " for " + service +
+                            " has a character that can't be sent. Enter it again in the settings.");
+                }
             if (body != null) {
                 connection.setDoOutput(true);
+                // Only a file is streamed: a small request stays buffered, so a stale connection is retried quietly.
+                if (body.length > SLICE)
+                    connection.setFixedLengthStreamingMode(body.length);
                 try (OutputStream os = connection.getOutputStream()) {
-                    os.write(body.getBytes(StandardCharsets.UTF_8));
+                    for (int at = 0; at < body.length; at += SLICE) {
+                        os.write(body, at, Math.min(SLICE, body.length - at));
+                        if (sending != null)
+                            sending.sent(Math.min(at + SLICE, body.length));
+                    }
                 }
             }
             int status = connection.getResponseCode();
@@ -91,12 +124,12 @@ public class ExtHttp {
             return new Response(status, text);
         } catch (SocketTimeoutException ex) {
             throw new IOException("No answer from " + service + " after " + timeout + " seconds");
-        } catch (IOException ex) {
-            // A connection error can quote the request, so the key is taken out.
+        } catch (IOException | IllegalArgumentException ex) {
+            // An error can quote the request, so the key is taken out.
             String message = ex.getMessage() == null ? "the connection failed" : ex.getMessage();
             if (secret != null && !secret.isEmpty())
                 message = message.replace(secret, "[API key]");
-            throw new IOException("Can't reach " + service + ": " + message);
+            throw new IOException(ex instanceof IOException ? "Can't reach " + service + ": " + message : message);
         } finally {
             connection.disconnect();
         }
@@ -106,7 +139,14 @@ public class ExtHttp {
         if (is == null)
             return "";
         try (InputStream in = is) {
-            return Helper.readStream(in);
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            byte[] buffer = new byte[SLICE];
+            for (int len = in.read(buffer); len != -1; len = in.read(buffer)) {
+                if (os.size() + len > MAX_ANSWER)
+                    throw new IOException("the answer is too long");
+                os.write(buffer, 0, len);
+            }
+            return new String(os.toByteArray(), StandardCharsets.UTF_8);
         }
     }
 }

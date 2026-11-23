@@ -1921,7 +1921,7 @@ public class FragmentCompose extends FragmentBase {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        ExtHooks.listenCompose(this, etTo, spIdentity); // Plus
+        ExtHooks.listenCompose(this, etTo, spIdentity, etBody); // Plus
 
         state = State.NONE;
 

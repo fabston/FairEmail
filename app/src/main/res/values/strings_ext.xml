@@ -37,6 +37,19 @@
     <string name="ext_ai_provider" translatable="false">Service</string>
     <string name="ext_ai_key" translatable="false">API key</string>
     <string name="ext_ai_model" translatable="false">Model</string>
+    <string name="ext_gokapi_title" translatable="false">Gokapi</string>
+    <string name="ext_gokapi_summary" translatable="false">Share large files as links instead of attachments, end-to-end encrypted, with your Gokapi server.</string>
+    <string name="ext_gokapi_share_file" translatable="false">Share a file as a link</string>
+    <string name="ext_gokapi_share_attachment" translatable="false">Share as a link instead</string>
+    <string name="ext_gokapi_server" translatable="false">Gokapi server</string>
+    <string name="ext_gokapi_server_hint" translatable="false">Your Gokapi server\'s address. It must be https.</string>
+    <string name="ext_gokapi_api_key" translatable="false">API key</string>
+    <string name="ext_gokapi_api_key_hint" translatable="false">In Gokapi, under API keys, create one that may upload, and nothing else. To have a file deleted when you tap Undo, let it delete files too. It\'s kept on this phone only, apart from FairEmail\'s settings, so it isn\'t in exports, logs or debug info.</string>
+    <string name="ext_gokapi_e2e_key" translatable="false">End-to-end key</string>
+    <string name="ext_gokapi_e2e_key_hint" translatable="false">The key Gokapi gave you when you set up end-to-end encryption, 44 characters ending in =. If you didn\'t keep it, open Gokapi\'s upload page in the browser you set it up in, and run localStorage.getItem(\"e2ekey\") in its developer console. It never leaves this phone.</string>
+    <string name="ext_gokapi_defaults" translatable="false">Each link works for</string>
+    <string name="ext_gokapi_defaults_hint" translatable="false">Until either runs out, whichever comes first. Then the server deletes the file. You can change it for each file you share.</string>
+    <string name="ext_gokapi_link_works" translatable="false">The link works for</string>
     <string name="ext_updates" translatable="false">Check GitHub for updates</string>
     <string name="ext_updates_hint" translatable="false">Every few hours, when you open the app, asks GitHub whether this fork has a newer release, and shows a notification if it has. Long-press About in the side menu to check now.</string>
 </resources>

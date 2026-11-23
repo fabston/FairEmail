@@ -352,6 +352,7 @@ public class FragmentDialogInsertLink extends FragmentDialogBase {
         pbUpload.setVisibility(View.GONE);
         grpUpload.setVisibility(send_enabled && !BuildConfig.PLAY_STORE_RELEASE
                 ? View.VISIBLE : View.GONE);
+        ExtHooks.addToInsertLinkDialog(this, view, etLink, etTitle); // Plus
 
         return new AlertDialog.Builder(context)
                 .setView(view)

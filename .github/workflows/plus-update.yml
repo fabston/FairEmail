@@ -92,7 +92,7 @@ jobs:
         if: steps.release.outputs.build == 'true'
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon testGithubDebugUnitTest --tests 'eu.faircode.email.Addy*' --tests 'eu.faircode.email.Ai*' --tests 'eu.faircode.email.PlusUpdates*'
+          ./gradlew --no-daemon testGithubDebugUnitTest --tests 'eu.faircode.email.Addy*' --tests 'eu.faircode.email.Ai*' --tests 'eu.faircode.email.PlusUpdates*' --tests 'eu.faircode.email.Gokapi*'
 
       # A release build has to be signed with something, so this job makes a key it throws away.
       # Your own key is only ever used by the sign job.

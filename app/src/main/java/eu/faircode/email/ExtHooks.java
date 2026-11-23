@@ -79,21 +79,21 @@ public class ExtHooks {
     static final String RESULT_COMPOSE = "ext:compose";
     private static final int MENU_ADDY = 0x7e570001;
     private static final int MENU_AI = 0x7e570002;
+    private static final int MENU_GOKAPI = 0x7e570003;
+    private static final int MENU_GOKAPI_ATTACHMENT = 0x7e570004;
 
     // --- Shared -----------------------------------------------------------------------------------------------
 
     /**
-     * Fills a dropdown the way FairEmail's own settings do: compact when closed, a roomier list when open. The list
-     * opens below the field rather than on top of it, so what's chosen stays in view.
+     * Fills a dropdown: when closed, the value in a plain text size, lined up with the label above it; when open,
+     * the list FairEmail's own settings use, where Android puts it, so it opens smoothly wherever the field is.
      */
     static <T> void setDropdown(Spinner spinner, List<T> items) {
-        // Kept up to date whenever it's laid out, as in a dialog its height isn't known yet when it's filled.
-        if (spinner.getAdapter() == null)
-            spinner.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
-                    spinner.setDropDownVerticalOffset(bottom - top));
-        ArrayAdapter<T> adapter = new ArrayAdapter<>(spinner.getContext(), android.R.layout.simple_spinner_item, items);
+        ArrayAdapter<T> adapter = new ArrayAdapter<>(spinner.getContext(), R.layout.ext_spinner_item, items);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
+        // The field's own inset is taken out, so the value starts where the label does. The arrow stays at the end.
+        spinner.setPaddingRelative(0, spinner.getPaddingTop(), spinner.getPaddingEnd(), spinner.getPaddingBottom());
     }
 
     // --- Before sending ------------------------------------------------------------------------------------------
@@ -331,6 +331,11 @@ public class ExtHooks {
             // FairEmail shows the icons in ⋮ by putting them in the titles, which it's already done for its own items.
             PopupMenuLifecycle.insertIcon(context, addy, false);
         }
+        if (menu.findItem(MENU_GOKAPI) == null) {
+            MenuItem drop = menu.add(Menu.NONE, MENU_GOKAPI, 0, R.string.ext_gokapi_share_file)
+                    .setIcon(R.drawable.twotone_file_upload_24);
+            PopupMenuLifecycle.insertIcon(context, drop, false);
+        }
         if (menu.findItem(MENU_AI) == null) {
             // Always in the top bar, like FairEmail's own AI and encryption.
             MenuItem ai = menu.add(Menu.NONE, MENU_AI, 1, R.string.ext_ai_rewrite)
@@ -343,6 +348,10 @@ public class ExtHooks {
     static boolean onComposeMenu(Fragment compose, MenuItem item, TextView etTo, EditText etBody) {
         if (item.getItemId() == MENU_AI) {
             AiCompose.show(compose, etBody);
+            return true;
+        }
+        if (item.getItemId() == MENU_GOKAPI) {
+            GokapiCompose.show(compose, null);
             return true;
         }
         if (item.getItemId() != MENU_ADDY)
@@ -366,11 +375,37 @@ public class ExtHooks {
     }
 
     /**
-     * Applies what an extension's dialog decided to the email being written: a new To, and the identity to send
-     * from. Registered once the compose screen exists, so it also works after the screen is recreated.
+     * In the compose screen, long-pressing an attachment also offers to share it as a link instead, once Gokapi
+     * is set up. Not for images shown in the text, which would leave a gap there.
      */
-    static void listenCompose(@NonNull Fragment compose, TextView etTo, Spinner spIdentity) {
+    static void onAttachmentMenu(Fragment parent, Menu menu, EntityAttachment attachment) {
+        if (parent instanceof FragmentCompose && GokapiStore.isSetUp(parent.requireContext()) && GokapiCompose.canShare(attachment))
+            menu.add(Menu.NONE, MENU_GOKAPI_ATTACHMENT, 6, R.string.ext_gokapi_share_attachment);
+    }
+
+    /** True if an extension handled the attachment's menu item. */
+    static boolean onAttachmentMenuItem(Fragment parent, MenuItem item, EntityAttachment attachment) {
+        if (item.getItemId() != MENU_GOKAPI_ATTACHMENT)
+            return false;
+        GokapiCompose.show(parent, attachment);
+        return true;
+    }
+
+    /** Adds an Upload with Gokapi button to FairEmail's Insert link dialog, next to its own Send upload. */
+    static void addToInsertLinkDialog(Fragment dialog, View view, EditText etLink, EditText etTitle) {
+        GokapiCompose.addToLinkDialog(dialog, view, etLink, etTitle);
+    }
+
+    /**
+     * Applies what an extension's dialog decided to the email being written: a new To, the identity to send from, or
+     * links to put in the text. Registered once the compose screen exists, so it also works after it's recreated.
+     */
+    static void listenCompose(@NonNull Fragment compose, TextView etTo, Spinner spIdentity, EditText etBody) {
         compose.getParentFragmentManager().setFragmentResultListener(RESULT_COMPOSE, compose.getViewLifecycleOwner(), (key, result) -> {
+            if (result.containsKey(GokapiCompose.RESULT_LINKS)) {
+                GokapiCompose.insert(compose, etBody, result);
+                return;
+            }
             String to = result.getString("to");
             if (to != null)
                 etTo.setText(to);
@@ -575,6 +610,8 @@ public class ExtHooks {
                 new FragmentDialogAddySettings().show(fragment.getParentFragmentManager(), "ext:addy:settings"));
         column.findViewById(R.id.btnExtAi).setOnClickListener(v ->
                 new FragmentDialogAiSettings().show(fragment.getParentFragmentManager(), "ext:ai:settings"));
+        column.findViewById(R.id.btnExtGokapi).setOnClickListener(v ->
+                new FragmentDialogGokapiSettings().show(fragment.getParentFragmentManager(), "ext:gokapi:settings"));
         // FairEmail hides its own switch for this in builds it didn't sign, so it's here instead, for the same setting.
         if (PlusUpdates.isAvailable()) {
             SwitchCompat swUpdates = column.findViewById(R.id.swExtUpdates);

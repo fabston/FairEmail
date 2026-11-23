@@ -294,10 +294,13 @@ public class AdapterAttachment extends RecyclerView.Adapter<AdapterAttachment.Vi
                 if (parentFragment instanceof FragmentCompose)
                     popupMenu.getMenu().add(Menu.NONE, R.string.title_zip, 5, R.string.title_zip)
                             .setEnabled(!attachment.isInline() && !attachment.isCompressed());
+                ExtHooks.onAttachmentMenu(parentFragment, popupMenu.getMenu(), attachment); // Plus
 
                 popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
+                        if (ExtHooks.onAttachmentMenuItem(parentFragment, item, attachment)) // Plus
+                            return true;
                         int itemId = item.getItemId();
                         if (itemId == R.string.title_rename)
                             return onRename(attachment);

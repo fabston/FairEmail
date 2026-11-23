@@ -518,8 +518,9 @@ configurations.configureEach {
 }
 
 dependencies {
-    // Plus: unit tests for the extensions.
+    // Plus: unit tests for the extensions, and org.json for them, as Android's own is only a stub there.
     testImplementation "junit:junit:4.13.2"
+    testImplementation "org.json:json:20250517"
 
     //implementation fileTree(dir: 'libs', include: ['*.jar'])
 

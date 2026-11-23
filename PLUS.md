@@ -28,19 +28,43 @@ Set up under **Settings → Integrations → Extensions → AI writing**, with y
 
 This is separate from FairEmail's own AI feature (the robot icon), which writes new text from a prompt and adds it below your cursor.
 
+### Gokapi
+
+Shares large files as links instead of attachments, through your own [Gokapi](https://github.com/Forceu/Gokapi) server. Ported from the Betterbird add-on, with the same end-to-end encryption, so Gokapi's own download page opens the files. It's separate from FairEmail's own Send integration, which works with Firefox Send servers only.
+
+Set up under **Settings → Integrations → Extensions → Gokapi**:
+
+1. In Gokapi, open **API keys**, and create one that may upload, and nothing else. To have a file deleted when you tap **Undo**, let it delete files too.
+2. Find your end-to-end key: the key Gokapi gave you when you set up end-to-end encryption. If you didn't keep it, open Gokapi's upload page in the browser you set it up in, open the browser's developer console, and run `localStorage.getItem("e2ekey")`.
+3. Enter your server's address, which must be https, and both keys. Choose how many downloads (1 to 100, or unlimited) and days (1 to 30) a link works for, unless you choose otherwise for a file. **Save and test** checks both keys with the server, without uploading anything.
+
+Then, in the compose screen:
+
+- **Long-press an attachment → Share as a link instead.** It's uploaded, the link goes where you're writing, and the attachment is taken out of the email.
+- **⋮ → Share a file as a link** does the same for files you pick, one or more, without attaching them first.
+- **The link button → Upload with Gokapi**, next to FairEmail's own Send upload, works like it: the file you pick is uploaded, and its link and name fill in the dialog, to insert with OK. It's there wherever FairEmail's Insert link dialog is, in signatures and templates too. Cancel the dialog afterwards, and the file stays on the server until it expires, as with Send.
+
+Each file is encrypted on the phone with a new key, uploaded in chunks, and the email gets its name, linked, its size, and how long the link works: `report.pdf (12 MB)`, then `Download link, valid for 10 downloads until 26 November 2026, 10:42 UTC`, without naming Gokapi. Plain-text mail shows the address after the name. The file's name and key are only after the `#` in the link, which browsers never send to the server, so the server can't read either. It's also added to your list of encrypted files, so Gokapi's upload page shows it under its own name, as files you upload there do.
+
+**Undo**, in the message at the bottom, takes the link out of the email, deletes the file from the server if your API key may delete files, and attaches the file again if it was an attachment. After that, a link you remove stays on the server until it runs out of downloads or expires, as the phone can't tell you removed it. Closing the dialog while it uploads stops the upload.
+
+On a Gokapi server without end-to-end encryption, files are uploaded as they are, so the server can read them, and **Save and test** says so. That only happens while no end-to-end key is entered: with one, nothing is uploaded to a server that says it doesn't encrypt. The server must be https.
+
 ## How it fits into FairEmail
 
-All extension code is in new files: `Addy*.java`, `Ai*.java`, `ExtHooks.java`, `ExtHttp.java`, `PlusUpdates.java`, `FragmentAddyAliases.java`, `FragmentDialogAddy*.java`, `FragmentDialogAiSettings.java`, `res/layout/*ext*`, `res/values/strings_ext.xml`, and the tests in `app/src/test`. FairEmail's own files only call into `ExtHooks`, from a line or two each, marked `Plus`:
+All extension code is in new files: `Addy*.java`, `Ai*.java`, `Gokapi*.java`, `ExtHooks.java`, `ExtHttp.java`, `PlusUpdates.java`, `FragmentAddyAliases.java`, `FragmentDialogAddy*.java`, `FragmentDialogAiSettings.java`, `FragmentDialogGokapi*.java`, `res/layout/*ext*`, `res/values/strings_ext.xml`, and the tests in `app/src/test`. FairEmail's own files only call into `ExtHooks`, from a line or two each, marked `Plus`:
 
 | File | What the line does |
 | --- | --- |
-| `FragmentCompose.java` | Runs the extensions' checks with FairEmail's pre-send check, shows the send dialog if they found anything, adds and handles the compose menu entries (addy.io alias, Rewrite with AI), and listens for the alias dialog's result |
+| `FragmentCompose.java` | Runs the extensions' checks with FairEmail's pre-send check, shows the send dialog if they found anything, adds and handles the compose menu entries (addy.io alias, Rewrite with AI, Share a file as a link), and listens for the alias and Gokapi dialogs' results |
+| `AdapterAttachment.java` | Adds Share as a link instead to an attachment's long-press menu in the compose screen |
+| `FragmentDialogInsertLink.java` | Adds Upload with Gokapi to the Insert link dialog |
 | `FragmentDialogSend.java` | Shows what the checks found at the top of the send dialog |
 | `FragmentOptionsIntegrations.java` | Adds the Extensions card to the Integrations settings |
 | `ActivityView.java` | Adds the addy.io section to the side menu, and checks this fork's releases for updates instead of FairEmail's |
 | `app/src/github/.../ActivityBilling.java` | Lets a Pro code bought for FairEmail activate here too, as it's made for FairEmail's app ID |
 | `AdapterMessage.java` | Shows addresses through your aliases as who they really reach, in the message list and an opened message's header |
-| `app/build.gradle` | The `.plus` app ID, JUnit for the tests, a quoted native build flag, so it builds in a folder with a space in its name, and which GitHub build an app is, for its update check |
+| `app/build.gradle` | The `.plus` app ID, JUnit and org.json for the tests, a quoted native build flag, so it builds in a folder with a space in its name, and which GitHub build an app is, for its update check |
 
 To find them all: `git grep -n "Plus"` in those files.
 
@@ -51,7 +75,7 @@ Only FairEmail's releases are followed, not every change on its master branch. G
 ```
 git fetch upstream tag 1.2342
 git merge 1.2342     # conflicts can only be in the lines above
-./gradlew testGithubDebugUnitTest --tests 'eu.faircode.email.Addy*' --tests 'eu.faircode.email.Ai*' --tests 'eu.faircode.email.PlusUpdates*'
+./gradlew testGithubDebugUnitTest --tests 'eu.faircode.email.Addy*' --tests 'eu.faircode.email.Ai*' --tests 'eu.faircode.email.PlusUpdates*' --tests 'eu.faircode.email.Gokapi*'
 ./gradlew assembleGithubRelease
 ```
 
@@ -73,7 +97,7 @@ The app built this way checks the repository's releases itself, as FairEmail's o
 Three things it can't do:
 
 - Push a merge in which FairEmail changed its own workflow files, as GitHub doesn't let a workflow do that. The run fails at the last step, and you merge that release by hand instead.
-- Notice an extension that builds but no longer shows up. Check the addy.io warning, the Extensions card and the side menu after each release.
+- Notice an extension that builds but no longer shows up. Check the addy.io warning, the Extensions card, the side menu and an attachment's long-press menu after each release.
 - Keep running if the repository sees no activity for 60 days. GitHub then pauses the daily check until you turn it back on.
 
 ### Signing on GitHub
@@ -106,4 +130,5 @@ Then `./gradlew assembleGithubRelease`. Keep the key safe: updates must be signe
 - Gmail and Outlook sign-in (OAuth) is registered to FairEmail itself, so it doesn't work in a fork. Use an app password, or IMAP and SMTP with a password, for those accounts.
 - The extensions' text is English only.
 - The check before sending runs when you tap Send in the compose screen. A reply typed straight into a notification, and replies FairEmail sends by itself from a rule, aren't checked.
-- The addy.io settings, API key included, are in a file of their own on the phone, not in FairEmail's settings. So they're not in FairEmail's log, debug info, exports or cloud sync, and you enter the key again on a new phone.
+- The addy.io, AI writing and Gokapi settings, keys included, are in files of their own on the phone, not in FairEmail's settings. So they're not in FairEmail's log, debug info, exports or cloud sync, and you enter the keys again on a new phone.
+- Gokapi can't delete a file when you remove its link by hand, or discard the email, as Betterbird does: only **Undo** does. Otherwise it stays until it runs out of downloads or expires. It also doesn't offer a link by itself when you attach a large file: long-press the attachment.

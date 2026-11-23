@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FairEmail Plus: a dropdown's chosen value, lined up with the label above it. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/text1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:ellipsize="end"
+    android:paddingVertical="8dp"
+    android:singleLine="true"
+    android:textAlignment="viewStart"
+    android:textAppearance="@style/TextAppearance.AppCompat.Subhead" />
