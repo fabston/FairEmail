@@ -106,10 +106,12 @@ public class FragmentDialogGokapiUpload extends FragmentDialogBase {
                 : "Without an end-to-end key, the file goes to " + GokapiStore.server(context).replaceFirst("^https://", "") +
                 " as it is, so the server can read it, if the server allows that.");
 
+        // The Insert link dialog takes one address, so it picks one file. Otherwise several can be picked, a link each.
+        boolean several = !attachment && !args.containsKey(GokapiCompose.ARG_RESULT);
         AlertDialog dialog = new AlertDialog.Builder(context)
-                .setTitle(attachment ? "Share as a link" : "Share a file as a link")
+                .setTitle(attachment ? "Share as a link" : several ? "Share files as links" : "Share a file as a link")
                 .setView(view)
-                .setPositiveButton(attachment ? "Share" : "Choose file…", null)
+                .setPositiveButton(attachment ? "Share" : several ? "Choose files…" : "Choose file…", null)
                 .setNegativeButton(android.R.string.cancel, null)
                 .create();
         dialog.setCanceledOnTouchOutside(false);
@@ -137,7 +139,6 @@ public class FragmentDialogGokapiUpload extends FragmentDialogBase {
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.setType("*/*");
-        // One file for a link of its own, as the link dialog takes one address.
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, !requireArguments().containsKey(GokapiCompose.ARG_RESULT));
         try {
             startActivityForResult(Helper.getChooser(requireContext(), intent), REQUEST_PICK);

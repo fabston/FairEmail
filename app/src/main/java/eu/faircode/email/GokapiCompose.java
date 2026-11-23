@@ -211,7 +211,7 @@ public class GokapiCompose {
             text.append('\n');
         }
         // What it's shared with isn't named: whoever gets the email only needs to know how long the link works.
-        text.append("Download link, valid");
+        text.append(links.size() == 1 ? "Download link, valid" : "Download links, valid");
         if (downloads > 0)
             text.append(" for ").append(GokapiStore.downloadsText(downloads).toLowerCase(Locale.ROOT));
         text.append(" until ").append(format.format(new Date(now + days * DAY)));
