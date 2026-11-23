@@ -37,4 +37,6 @@
     <string name="ext_ai_provider" translatable="false">Service</string>
     <string name="ext_ai_key" translatable="false">API key</string>
     <string name="ext_ai_model" translatable="false">Model</string>
+    <string name="ext_updates" translatable="false">Check GitHub for updates</string>
+    <string name="ext_updates_hint" translatable="false">Every few hours, when you open the app, asks GitHub whether this fork has a newer release, and shows a notification if it has. Long-press About in the side menu to check now.</string>
 </resources>

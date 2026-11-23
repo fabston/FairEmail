@@ -30,57 +30,63 @@ This is separate from FairEmail's own AI feature (the robot icon), which writes 
 
 ## How it fits into FairEmail
 
-All extension code is in new files: `Addy*.java`, `Ai*.java`, `ExtHooks.java`, `ExtHttp.java`, `FragmentAddyAliases.java`, `FragmentDialogAddy*.java`, `FragmentDialogAiSettings.java`, `res/layout/*ext*`, `res/values/strings_ext.xml`, and the tests in `app/src/test`. FairEmail's own files only call into `ExtHooks`, from a line or two each, marked `Plus`:
+All extension code is in new files: `Addy*.java`, `Ai*.java`, `ExtHooks.java`, `ExtHttp.java`, `PlusUpdates.java`, `FragmentAddyAliases.java`, `FragmentDialogAddy*.java`, `FragmentDialogAiSettings.java`, `res/layout/*ext*`, `res/values/strings_ext.xml`, and the tests in `app/src/test`. FairEmail's own files only call into `ExtHooks`, from a line or two each, marked `Plus`:
 
 | File | What the line does |
 | --- | --- |
 | `FragmentCompose.java` | Runs the extensions' checks with FairEmail's pre-send check, shows the send dialog if they found anything, adds and handles the compose menu entries (addy.io alias, Rewrite with AI), and listens for the alias dialog's result |
 | `FragmentDialogSend.java` | Shows what the checks found at the top of the send dialog |
 | `FragmentOptionsIntegrations.java` | Adds the Extensions card to the Integrations settings |
-| `ActivityView.java` | Adds the addy.io section to the side menu |
+| `ActivityView.java` | Adds the addy.io section to the side menu, and checks this fork's releases for updates instead of FairEmail's |
 | `app/src/github/.../ActivityBilling.java` | Lets a Pro code bought for FairEmail activate here too, as it's made for FairEmail's app ID |
 | `AdapterMessage.java` | Shows addresses through your aliases as who they really reach, in the message list and an opened message's header |
-| `app/build.gradle` | The `.plus` app ID, JUnit for the tests, and a quoted native build flag, so it builds in a folder with a space in its name |
+| `app/build.gradle` | The `.plus` app ID, JUnit for the tests, a quoted native build flag, so it builds in a folder with a space in its name, and which GitHub build an app is, for its update check |
 
 To find them all: `git grep -n "Plus"` in those files.
 
 ## Updating from FairEmail
 
+Only FairEmail's releases are followed, not every change on its master branch. GitHub does this by itself (below). By hand, with the release's tag, such as `1.2342`:
+
 ```
-git fetch upstream
-git merge upstream/master     # conflicts can only be in the lines above
-./gradlew testGithubDebugUnitTest --tests 'eu.faircode.email.Addy*' --tests 'eu.faircode.email.Ai*'
+git fetch upstream tag 1.2342
+git merge 1.2342     # conflicts can only be in the lines above
+./gradlew testGithubDebugUnitTest --tests 'eu.faircode.email.Addy*' --tests 'eu.faircode.email.Ai*' --tests 'eu.faircode.email.PlusUpdates*'
 ./gradlew assembleGithubRelease
 ```
 
 ### Automatically, on GitHub
 
-`.github/workflows/plus-update.yml` does the above every Monday, and whenever you start it under **Actions → Plus update → Run workflow**. If FairEmail has something new, it merges it into the branch `plus/upstream-update`, runs the tests, builds the app and opens a pull request. If the merge conflicts or the build breaks, the run fails, GitHub emails you, and the run's summary says what to fix by hand.
+`.github/workflows/plus-update.yml` checks every day whether FairEmail has published a new release. If it has, it merges it, runs the tests, builds the app, signs it with your key, pushes the merge to master, and publishes it as a release under **Releases**, with the APK attached. It does the same, without merging anything, whenever you push to master, and when you start it under **Actions → Plus update → Run workflow**. Only the five newest releases are kept.
+
+If anything goes wrong, nothing is merged or published: the run fails, GitHub emails you, and the run's summary says what to do. When FairEmail changes a line next to one of the `Plus` lines, merge that release by hand, as above.
+
+Releases of a public repository can be downloaded by anyone. They're your build of free software, signed with your key, and hold nothing private, but make the repository private if you'd rather they weren't public.
 
 To set it up, once:
 
 1. Push this repository to GitHub, and turn on Actions for it under the **Actions** tab (they're off in a fork).
-2. Under **Settings → Actions → General**, tick **Allow GitHub Actions to create and approve pull requests**.
+2. Set up signing, below. Without it, nothing is merged or published.
+
+The app built this way checks the repository's releases itself, as FairEmail's own check only works in apps FairEmail signed. When there's a newer one, it shows FairEmail's usual update notification: tap it for the release, or **Download** for the APK. It checks every few hours when you open the app, and long-pressing **About** in the side menu checks straight away. It can be turned off under **Settings → Integrations → Extensions → Check GitHub for updates**. Apps you build yourself don't check. To have updates installed without asking, use [Obtainium](https://github.com/ImranR98/Obtainium) instead, with this repository's address.
 
 Three things it can't do:
 
-- Push a merge in which FairEmail changed its own workflow files, as GitHub doesn't let a workflow do that. The run fails at the last step, and you merge on your own computer instead.
-- Notice an extension that builds but no longer shows up. The pull request lists what to check by hand.
-- Keep running if the repository sees no activity for 60 days. GitHub then pauses the schedule until you turn it back on.
+- Push a merge in which FairEmail changed its own workflow files, as GitHub doesn't let a workflow do that. The run fails at the last step, and you merge that release by hand instead.
+- Notice an extension that builds but no longer shows up. Check the addy.io warning, the Extensions card and the side menu after each release.
+- Keep running if the repository sees no activity for 60 days. GitHub then pauses the daily check until you turn it back on.
 
-### A signed APK from GitHub (optional)
-
-Without this, the workflow only checks the merge, and you build the app you install yourself, as under Building. With it, each run also leaves a signed APK under the run's **Artifacts**.
+### Signing on GitHub
 
 Your key is used by a separate job, `sign`, that runs none of the project's code: it downloads the built APK and signs it with Android's own tool. The key is kept in a GitHub environment that only this job can read, so nothing in the build can get at it. It's still a copy of your key on GitHub, so anyone who gets into your GitHub account could use it.
 
-1. Under **Settings → Environments**, create an environment called `signing`. Limit it to the `master` branch, and add yourself as a required reviewer if you want to approve each signing.
+1. Under **Settings → Environments**, create an environment called `signing`, and limit it to the `master` branch. Don't add a required reviewer: it would stop every run until you approve it.
 2. Add these as secrets of that environment, not of the repository:
    - `SIGNING_KEYSTORE_BASE64`: the output of `base64 -i your.keystore`
    - `SIGNING_STORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`
 3. Under **Settings → Secrets and variables → Actions → Variables**, add `SIGN_APK` with the value `true`.
 
-The run's summary shows the signed APK's certificate fingerprint. It should match `keytool -list -v -keystore your.keystore`.
+Each release's notes show its certificate fingerprint. It should match `keytool -list -v -keystore your.keystore`.
 
 ## Building
 

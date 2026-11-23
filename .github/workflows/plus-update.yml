@@ -1,11 +1,19 @@
-# FairEmail Plus: merges FairEmail's updates, checks the extensions still build, and opens a pull request.
-# Optionally signs the APK with your own key, in a separate job that never runs the build. See PLUS.md.
+# FairEmail Plus: when FairEmail publishes a release, merges it, tests and builds the app, signs it with your key, and
+# publishes it as a GitHub release. Also builds and publishes what you push to master. See PLUS.md.
+#
+# Three jobs, so the code that's built never holds anything that matters:
+# - build runs FairEmail's code and its dependencies, and can only read this repository.
+# - sign only downloads the APK and signs it with Android's own tool. Only it can read your key.
+# - publish runs none of the project's code: it merges the exact release that was built into master, and publishes.
 name: Plus update
-run-name: Plus update${{ github.event_name == 'workflow_dispatch' && ' (manual)' || '' }}
+run-name: Plus update (${{ github.event_name }})
 
 on:
   schedule:
-    - cron: '17 5 * * 1' # Mondays, 05:17 UTC
+    - cron: '17 5 * * *' # daily, 05:17 UTC
+  push:
+    branches: [master]
+    paths-ignore: ['**.md']
   workflow_dispatch:
 
 concurrency:
@@ -17,55 +25,63 @@ permissions:
 
 env:
   UPSTREAM: https://github.com/M66B/FairEmail.git
-  UPDATE_BRANCH: plus/upstream-update
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # pushes the update branch
-      pull-requests: write # opens the pull request
     outputs:
-      merged: ${{ steps.merge.outputs.merged }}
+      build: ${{ steps.release.outputs.build }}
+      merged: ${{ steps.release.outputs.merged }}
+      tag: ${{ steps.release.outputs.tag }}
+      release: ${{ steps.release.outputs.sha }}
     steps:
-      # The token isn't kept in the checkout, so the build below, which runs FairEmail's code and its
-      # dependencies, can't use it to write to this repository. Only the last step gets it.
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Merge FairEmail's updates
-        id: merge
+      - name: Merge FairEmail's latest release, if it's new
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch --no-tags "$UPSTREAM" master
-          if git merge-base --is-ancestor FETCH_HEAD HEAD; then
-            echo "merged=false" >> "$GITHUB_OUTPUT"
-            echo "Already up to date with FairEmail." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          git checkout -B "$UPDATE_BRANCH"
-          if ! git merge --no-edit -m "Merge FairEmail's updates" FETCH_HEAD; then
+          tag="$(gh api repos/M66B/FairEmail/releases/latest --jq .tag_name)"
+          case "$tag" in
+            [0-9]*.[0-9]*) ;;
+            *) echo "FairEmail's latest release has an unexpected tag: $tag" >> "$GITHUB_STEP_SUMMARY"; exit 1 ;;
+          esac
+          git fetch --no-tags "$UPSTREAM" "refs/tags/$tag"
+          sha="$(git rev-parse 'FETCH_HEAD^{commit}')"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          merged=false
+          if git merge-base --is-ancestor "$sha" HEAD; then
+            echo "Already has FairEmail $tag, its latest release." >> "$GITHUB_STEP_SUMMARY"
+          elif git merge --no-edit -m "Merge FairEmail $tag" "$sha"; then
+            merged=true
+            echo "Merged FairEmail $tag." >> "$GITHUB_STEP_SUMMARY"
+          else
             {
-              echo "### The merge needs you"
-              echo "FairEmail changed something next to a \`Plus\` line. Merge it yourself, as PLUS.md describes. Conflicts:"
+              echo "### FairEmail $tag needs merging by hand"
+              echo "It changed something next to a \`Plus\` line. Merge it on your computer, as PLUS.md describes. Conflicts:"
               echo '```'
               git diff --name-only --diff-filter=U
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          echo "merged=true" >> "$GITHUB_OUTPUT"
-
-      # A manual run builds even with nothing new, to get an APK of what's there.
-      - name: Anything to build?
-        id: todo
-        run: echo "build=${{ steps.merge.outputs.merged == 'true' || github.event_name == 'workflow_dispatch' }}" >> "$GITHUB_OUTPUT"
+          echo "merged=$merged" >> "$GITHUB_OUTPUT"
+          # The daily check only builds for a new release. A push or a run you start always builds.
+          if [ "$merged" = true ] || [ "$GITHUB_EVENT_NAME" != "schedule" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up JDK 21
-        if: steps.todo.outputs.build == 'true'
+        if: steps.release.outputs.build == 'true'
         uses: actions/setup-java@v5
         with:
           java-version: '21'
@@ -73,15 +89,18 @@ jobs:
           cache: gradle
 
       - name: Test the extensions
-        if: steps.todo.outputs.build == 'true'
+        if: steps.release.outputs.build == 'true'
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon testGithubDebugUnitTest --tests 'eu.faircode.email.Addy*' --tests 'eu.faircode.email.Ai*'
+          ./gradlew --no-daemon testGithubDebugUnitTest --tests 'eu.faircode.email.Addy*' --tests 'eu.faircode.email.Ai*' --tests 'eu.faircode.email.PlusUpdates*'
 
       # A release build has to be signed with something, so this job makes a key it throws away.
       # Your own key is only ever used by the sign job.
       - name: Build the APK
-        if: steps.todo.outputs.build == 'true'
+        if: steps.release.outputs.build == 'true'
+        env:
+          # Goes into the app, and into the release's name, so the app can tell a newer release from its own.
+          PLUS_BUILD: ${{ github.run_id }}
         run: |
           keytool -genkeypair -keystore "$RUNNER_TEMP/throwaway.keystore" -storepass throwaway -keypass throwaway \
             -alias throwaway -keyalg RSA -keysize 2048 -validity 1 -dname "CN=Throwaway"
@@ -90,37 +109,17 @@ jobs:
           ./gradlew --no-daemon assembleGithubRelease
 
       - name: Keep the APK for signing
-        if: steps.todo.outputs.build == 'true'
+        if: steps.release.outputs.build == 'true'
         uses: actions/upload-artifact@v6
         with:
           name: apk-not-yet-signed
           path: app/build/outputs/apk/github/release/*.apk
           if-no-files-found: error
-          retention-days: 3
+          retention-days: 1
 
-      - name: Open the pull request
-        if: steps.merge.outputs.merged == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # FairEmail's own workflow files can't be pushed with this job's token. If this fails for that reason,
-          # merge on your own computer instead.
-          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$UPDATE_BRANCH"
-          if [ -z "$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$UPDATE_BRANCH" --state open --json number --jq '.[].number')" ]; then
-            gh pr create --repo "$GITHUB_REPOSITORY" --base "${GITHUB_REF_NAME}" --head "$UPDATE_BRANCH" \
-              --title "Merge FairEmail's updates" \
-              --body "FairEmail's latest changes, merged without conflicts. The addy.io tests pass and the app builds.
-
-          Before merging, install the APK from this run and check what the tests can't: a send to a non-alias address shows the warning, Settings → Integrations has the Extensions card, and the side menu has its addy.io section.
-
-          Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          fi
-
-  # Runs none of the project's code: it only downloads the APK and signs it with Android's own tool.
-  # The key lives in the "signing" environment, so the build job above can't read it.
   sign:
     needs: build
-    if: vars.SIGN_APK == 'true' && (needs.build.outputs.merged == 'true' || github.event_name == 'workflow_dispatch')
+    if: needs.build.outputs.build == 'true' && vars.SIGN_APK == 'true'
     runs-on: ubuntu-latest
     environment: signing
     permissions: {}
@@ -145,7 +144,6 @@ jobs:
             "$tools/zipalign" -f -p 4 "$apk" "$out"
             "$tools/apksigner" sign --ks "$RUNNER_TEMP/release.keystore" --ks-key-alias "$KEY_ALIAS" \
               --ks-pass env:STORE_PASSWORD --key-pass env:KEY_PASSWORD "$out"
-            "$tools/apksigner" verify --print-certs "$out" | grep -i "SHA-256" >> "$GITHUB_STEP_SUMMARY"
           done
           rm -f "$RUNNER_TEMP/release.keystore" signed/*.idsig
 
@@ -154,3 +152,59 @@ jobs:
           name: FairEmail-Plus-signed
           path: signed/*.apk
           if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [build, sign]
+    if: needs.build.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # pushes the merge and publishes the release
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Merge the same release into master
+        if: needs.build.outputs.merged == 'true'
+        env:
+          TAG: ${{ needs.build.outputs.tag }}
+          RELEASE: ${{ needs.build.outputs.release }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags "$UPSTREAM" "refs/tags/$TAG"
+          git merge --no-edit -m "Merge FairEmail $TAG" "$RELEASE"
+          # Both jobs start from the same commit, so this is exactly what was built. Should master have moved on
+          # meanwhile, the push is turned down and nothing is published.
+          # Pushes with this job's token don't start the workflow again.
+          git push origin HEAD:master
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: FairEmail-Plus-signed
+          path: signed
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          apk="$(ls signed/*.apk | head -1)"
+          tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          fingerprint="$("$tools/apksigner" verify --print-certs "$apk" | sed -n 's/.*SHA-256 digest: //p' | head -1)"
+          commit="$(git rev-parse HEAD)"
+          # The app compares the run number at the end with its own, as a push keeps FairEmail's version number.
+          name="plus-$TAG-$GITHUB_RUN_ID"
+          gh release delete "$name" --cleanup-tag --yes 2>/dev/null || true
+          cp "$apk" "FairEmail-Plus-$TAG.apk"
+          gh release create "$name" "FairEmail-Plus-$TAG.apk" --target "$commit" --latest \
+            --title "FairEmail Plus $TAG ($(date -u +%Y-%m-%d))" \
+            --notes "FairEmail $TAG with the Plus extensions, built from ${commit:0:7}.
+
+          Signed with your own key. Its certificate's SHA-256 is \`$fingerprint\`."
+          echo "Published [$name]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$name)." >> "$GITHUB_STEP_SUMMARY"
+          # Only the five newest are kept.
+          gh release list --limit 100 --json tagName --jq '.[].tagName' | grep '^plus-' | tail -n +6 | while read -r old; do
+            gh release delete "$old" --cleanup-tag --yes
+          done

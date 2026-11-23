@@ -64,5 +64,22 @@
             android:layout_marginTop="6dp"
             android:text="@string/ext_ai_summary"
             android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+        <!-- Only shown in builds from the GitHub workflow, as only they can check for newer ones. -->
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swExtUpdates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/ext_updates"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvExtUpdatesHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ext_updates_hint"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:visibility="gone" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

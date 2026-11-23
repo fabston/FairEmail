@@ -18,6 +18,7 @@ package eu.faircode.email;
 */
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
@@ -48,6 +49,8 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.fragment.app.Fragment;
@@ -572,5 +575,21 @@ public class ExtHooks {
                 new FragmentDialogAddySettings().show(fragment.getParentFragmentManager(), "ext:addy:settings"));
         column.findViewById(R.id.btnExtAi).setOnClickListener(v ->
                 new FragmentDialogAiSettings().show(fragment.getParentFragmentManager(), "ext:ai:settings"));
+        // FairEmail hides its own switch for this in builds it didn't sign, so it's here instead, for the same setting.
+        if (PlusUpdates.isAvailable()) {
+            SwitchCompat swUpdates = column.findViewById(R.id.swExtUpdates);
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            swUpdates.setChecked(prefs.getBoolean("updates", true));
+            swUpdates.setOnCheckedChangeListener((v, checked) -> prefs.edit().putBoolean("updates", checked).apply());
+            swUpdates.setVisibility(View.VISIBLE);
+            column.findViewById(R.id.tvExtUpdatesHint).setVisibility(View.VISIBLE);
+        }
+    }
+
+    // --- Updates ------------------------------------------------------------------------------------------------
+
+    /** True if this is a build from FairEmail Plus's GitHub workflow, which then checks its own releases instead. */
+    static boolean checkUpdate(AppCompatActivity activity, boolean always) {
+        return PlusUpdates.check(activity, always);
     }
 }

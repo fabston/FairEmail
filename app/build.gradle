@@ -36,6 +36,9 @@ android {
 
         buildConfigField "String", "REVISION", "\"" + getRevision() + "\""
         buildConfigField "String", "RELEASE_NAME", "\"" + getReleaseName() + "\""
+        // Plus: the GitHub repository and workflow run a build comes from, so it can find newer ones. Empty elsewhere.
+        buildConfigField "String", "PLUS_REPOSITORY", "\"" + (System.getenv("GITHUB_REPOSITORY") ?: "") + "\""
+        buildConfigField "String", "PLUS_BUILD", "\"" + (System.getenv("PLUS_BUILD") ?: "") + "\""
 
         javaCompileOptions {
             annotationProcessorOptions {
