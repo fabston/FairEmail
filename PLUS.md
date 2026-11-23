@@ -20,7 +20,7 @@ Set up under **Settings → Integrations → Extensions → addy.io**.
 
 Set up under **Settings → Integrations → Extensions → AI writing**, with your own OpenAI or Anthropic API key. Each service keeps its own key and model, so you can switch between them. Ported from the Betterbird add-on.
 
-- In the compose screen, **⋮ → Rewrite with AI**: **Fix spelling & grammar**, **Improve writing**, **Make shorter**, **More formal**, **More friendly**, **Translate** (the last language you chose is offered first), or **Say what to change** in your own words.
+- In the compose screen, tap the wand in the top bar: **Fix spelling & grammar**, **Improve writing**, **Make shorter**, **More formal**, **More friendly**, **Translate** (the last language you chose is offered first), or **Say what to change** in your own words.
 - It works on your selection, or else on everything you wrote. Quoted mail and your signature are kept apart from it by FairEmail, so they aren't sent, unless you've chosen **Edit plain text** or **Edit formatted text** on the quoted mail, which makes it part of your text.
 - Your text is replaced straight away, and **Undo** in the message at the bottom puts it back. If you edit the text while the AI is working, your changes aren't overwritten.
 - Your bold, italics, lists and links are kept. The AI can reword your text, but it can't add links, images, scripts or styling that weren't there.

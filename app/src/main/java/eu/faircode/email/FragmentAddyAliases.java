@@ -71,6 +71,8 @@ public class FragmentAddyAliases extends FragmentBase {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         setSubtitle(R.string.ext_addy_nav_aliases);
+        // Like FairEmail's own screens, so the arrow at the top goes back rather than closing the app.
+        setHasOptionsMenu(true);
         View view = inflater.inflate(R.layout.fragment_ext_addy_aliases, container, false);
         tvAccount = view.findViewById(R.id.tvAccount);
         cardAccount = view.findViewById(R.id.cardAccount);

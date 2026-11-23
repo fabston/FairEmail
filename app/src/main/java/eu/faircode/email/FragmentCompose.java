@@ -2174,7 +2174,7 @@ public class FragmentCompose extends FragmentBase {
 
         MenuCompat.setGroupDividerEnabled(menu, true);
 
-        ExtHooks.onCreateComposeMenu(menu); // Plus
+        ExtHooks.onCreateComposeMenu(context, menu); // Plus
 
         super.onCreateOptionsMenu(menu, inflater);
     }

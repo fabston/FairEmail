@@ -320,14 +320,20 @@ public class ExtHooks {
 
     // --- While writing ------------------------------------------------------------------------------------------
 
-    static void onCreateComposeMenu(Menu menu) {
-        if (menu.findItem(MENU_ADDY) == null)
+    static void onCreateComposeMenu(Context context, Menu menu) {
+        if (menu.findItem(MENU_ADDY) == null) {
             // First in the menu, as it's what you'd use most when everything goes through addy.io.
-            menu.add(Menu.NONE, MENU_ADDY, 0, "addy.io alias")
+            MenuItem addy = menu.add(Menu.NONE, MENU_ADDY, 0, "addy.io alias")
                     .setIcon(R.drawable.twotone_alternate_email_24);
-        if (menu.findItem(MENU_AI) == null)
-            menu.add(Menu.NONE, MENU_AI, 1, R.string.ext_ai_rewrite)
+            // FairEmail shows the icons in ⋮ by putting them in the titles, which it's already done for its own items.
+            PopupMenuLifecycle.insertIcon(context, addy, false);
+        }
+        if (menu.findItem(MENU_AI) == null) {
+            // Always in the top bar, like FairEmail's own AI and encryption.
+            MenuItem ai = menu.add(Menu.NONE, MENU_AI, 1, R.string.ext_ai_rewrite)
                     .setIcon(R.drawable.twotone_auto_fix_high_24);
+            ai.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        }
     }
 
     /** True if an extension handled the menu item. etTo and etBody are the email's To and its text. */
