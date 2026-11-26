@@ -121,8 +121,12 @@ public class AddyIncoming {
         if (alias == null)
             return;
 
-        AddySenders.Finding finding = AddySenders.check(expected(context, alias.description), host, root,
-                AddySenders.dmarc(header(imessage, "X-AnonAddy-Authentication-Results")), AddyStore.suggestSenders(context));
+        // Anyone who knows your real address can write to it with addy.io's headers. Your provider's word comes first.
+        AddySenders.Finding finding = AddySenders.arrival(
+                imessage.getHeader("Authentication-Results"), AddyAddresses.domainOf(alias.email));
+        if (finding == null)
+            finding = AddySenders.check(expected(context, alias.description), host, root,
+                    AddySenders.dmarc(header(imessage, "X-AnonAddy-Authentication-Results")), AddyStore.suggestSenders(context));
         if (finding == null)
             return;
         message.warning = message.warning == null ? finding.text : finding.text + ", " + message.warning;

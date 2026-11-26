@@ -132,7 +132,7 @@ Then `./gradlew assembleGithubRelease`. Keep the key safe: updates must be signe
 
 - Gmail and Outlook sign-in (OAuth) is registered to FairEmail itself, so it doesn't work in a fork. Use an app password, or IMAP and SMTP with a password, for those accounts.
 - The extensions' text is English only.
-- Senders are checked as mail arrives, so mail that was already there isn't. The check trusts the headers addy.io adds, so it only protects mail that really came through addy.io: someone who knows your real address could write to it directly and imitate them.
+- Senders are checked as mail arrives, so mail that was already there isn't. The check reads the headers addy.io adds, which someone who knows your real address could imitate by writing to it directly. Such mail is flagged as forged when your mail provider's own `Authentication-Results` header shows it didn't come from the alias's domain. If your provider adds no such header, the imitation isn't caught.
 - The check before sending runs when you tap Send in the compose screen. A reply typed straight into a notification, and replies FairEmail sends by itself from a rule, aren't checked.
 - The addy.io, AI writing and Gokapi settings, keys included, are in files of their own on the phone, not in FairEmail's settings. So they're not in FairEmail's log, debug info, exports or cloud sync, and you enter the keys again on a new phone.
 - Gokapi can't delete a file when you remove its link by hand, or discard the email, as Betterbird does: only **Undo** does. Otherwise it stays until it runs out of downloads or expires. It also doesn't offer a link by itself when you attach a large file: long-press the attachment.

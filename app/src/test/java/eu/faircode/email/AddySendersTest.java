@@ -41,6 +41,28 @@ public class AddySendersTest {
     }
 
     @Test
+    public void mailYourProviderDidntSeeComeFromTheAliasIsForged() {
+        String alias = "me.anonaddy.com";
+        String passed = "mx.provider.com; dkim=pass header.d=anonaddy.com;\r\n\tdmarc=pass (p=reject) header.from=me.anonaddy.com";
+        assertNull(AddySenders.arrival(new String[]{passed}, alias));
+        assertNull(AddySenders.arrival(new String[]{passed}, "Me.AnonAddy.com"));
+        // Written straight to your address, with addy.io's headers copied in.
+        assertEquals(AddySenders.Kind.FORGED, AddySenders.arrival(
+                new String[]{"mx.provider.com; spf=pass; dmarc=pass header.from=evil.io"}, alias).kind);
+        assertEquals(AddySenders.Kind.FORGED, AddySenders.arrival(
+                new String[]{"mx.provider.com; dmarc=fail header.from=me.anonaddy.com"}, alias).kind);
+        // Your provider's result is the top one. One that came with the email, or sits in a comment, doesn't count.
+        assertEquals(AddySenders.Kind.FORGED, AddySenders.arrival(
+                new String[]{"mx.provider.com; dmarc=pass header.from=evil.io", passed}, alias).kind);
+        assertEquals(AddySenders.Kind.FORGED, AddySenders.arrival(new String[]{
+                "mx.provider.com; spf=pass (\"x; dmarc=pass header.from=me.anonaddy.com\" (y; dmarc=pass)); dmarc=fail header.from=evil.io"}, alias).kind);
+        // A provider that doesn't say isn't held against the email.
+        assertNull(AddySenders.arrival(new String[]{"mx.provider.com; spf=pass"}, alias));
+        assertNull(AddySenders.arrival(new String[]{"mx.provider.com; dmarc=none header.from=me.anonaddy.com"}, alias));
+        assertNull(AddySenders.arrival(null, alias));
+    }
+
+    @Test
     public void mailFromTheExpectedDomainPasses_whateverItsSubdomain() {
         assertNull(kind(ONE_PASSWORD, "1password.com", "1password.com", "pass"));
         assertNull(kind(ONE_PASSWORD, "news.mail.1password.com", "1password.com", "pass"));

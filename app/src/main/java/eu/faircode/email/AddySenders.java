@@ -64,6 +64,8 @@ public class AddySenders {
     private static final Pattern DOMAIN = Pattern.compile(
             "(?<![\\w.-])([a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+)(?![\\w-])");
     private static final Pattern DMARC = Pattern.compile("\\bdmarc\\s*=\\s*([a-z]+)");
+    private static final Pattern PROVIDER_DMARC = Pattern.compile("^\\s*dmarc\\s*=\\s*([a-z]+)");
+    private static final Pattern HEADER_FROM = Pattern.compile("\\bheader\\.from\\s*=\\s*([^\\s;]+)");
     private static final Pattern FEEDBACK_ID = Pattern.compile("^F:([^:]+):anonaddy$");
 
     /** Everything in a description that could be a domain, lowercased. Whether each is a real one is up to the caller. */
@@ -80,6 +82,36 @@ public class AddySenders {
     static String dmarc(String authenticationResults) {
         Matcher matcher = DMARC.matcher(authenticationResults == null ? "" : authenticationResults.toLowerCase(Locale.ROOT));
         return matcher.find() ? matcher.group(1) : null;
+    }
+
+    /**
+     * Flags an email that your mail provider didn't see come from the alias's domain, so it wasn't forwarded by
+     * addy.io, and what its addy.io headers say is anyone's word. authenticationResults is the email's
+     * Authentication-Results headers from the top: your provider adds its own above any that came with the email.
+     * Null if it did come from there, or your provider doesn't say.
+     */
+    static Finding arrival(String[] authenticationResults, String aliasDomain) {
+        if (authenticationResults == null || aliasDomain == null)
+            return null;
+        for (String header : authenticationResults) {
+            // Comments and quoted strings go first, as they can repeat what the sender wrote, a fake result included.
+            String plain = header.toLowerCase(Locale.ROOT).replaceAll("\"(?:[^\"\\\\]|\\\\.)*\"", " ");
+            for (String stripped = null; !plain.equals(stripped); ) {
+                stripped = plain;
+                plain = plain.replaceAll("\\([^()]*\\)", " ");
+            }
+            for (String clause : plain.split(";")) {
+                Matcher dmarc = PROVIDER_DMARC.matcher(clause);
+                if (!dmarc.find())
+                    continue;
+                Matcher from = HEADER_FROM.matcher(clause);
+                boolean elsewhere = from.find() && !from.group(1).equals(aliasDomain.toLowerCase(Locale.ROOT));
+                return "fail".equals(dmarc.group(1)) || elsewhere
+                        ? new Finding(Kind.FORGED, MARK + "this didn't come through your alias. Its sender may be forged.")
+                        : null;
+            }
+        }
+        return null;
     }
 
     /** The alias's id, from the Feedback-ID header addy.io gives every email it forwards. Null if it isn't one. */
