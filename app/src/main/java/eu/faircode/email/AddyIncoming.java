@@ -168,7 +168,7 @@ public class AddyIncoming {
         String text = found.optString("text").replace(AddySenders.MARK, "");
         String said = is(found, AddySenders.Kind.SUGGEST) || text.isEmpty()
                 ? "This alias doesn't expect a sender yet. This email is from " + sender + "."
-                : text.substring(0, 1).toUpperCase() + text.substring(1);
+                : text.substring(0, 1).toUpperCase(Locale.ROOT) + text.substring(1);
 
         Bundle args = new Bundle();
         args.putString("alias", found.optString("alias"));

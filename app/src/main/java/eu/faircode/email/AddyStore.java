@@ -428,7 +428,8 @@ public class AddyStore {
         return list;
     }
 
-    static void rememberOwnAliases(Context context, List<String> aliases) {
+    /** Adds to the aliases known to be yours. One at a time, as several threads do this, and none's may be lost. */
+    static synchronized void rememberOwnAliases(Context context, List<String> aliases) {
         if (aliases.isEmpty())
             return;
         Set<String> all = new LinkedHashSet<>(confirmed(context));

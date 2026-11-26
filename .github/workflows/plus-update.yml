@@ -48,10 +48,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           tag="$(gh api repos/M66B/FairEmail/releases/latest --jq .tag_name)"
-          case "$tag" in
-            [0-9]*.[0-9]*) ;;
-            *) echo "FairEmail's latest release has an unexpected tag: $tag" >> "$GITHUB_STEP_SUMMARY"; exit 1 ;;
-          esac
+          # Only a version, like 1.2342 or 1.2342a, is used as one.
+          if ! [[ "$tag" =~ ^[0-9]+(\.[0-9]+)+[a-z]?$ ]]; then
+            echo "FairEmail's latest release has an unexpected tag." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
           git fetch --no-tags "$UPSTREAM" "refs/tags/$tag"
           sha="$(git rev-parse 'FETCH_HEAD^{commit}')"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
