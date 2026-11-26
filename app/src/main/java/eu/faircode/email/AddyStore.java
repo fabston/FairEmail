@@ -50,6 +50,11 @@ public class AddyStore {
     static final String PREF_GUARD = "ext_addy_guard";
     static final String PREF_WARN_DIRECT = "ext_addy_warn_direct";
     static final String PREF_TRUSTED = "ext_addy_trusted";
+    static final String PREF_SENDERS = "ext_addy_senders";
+    static final String PREF_SUGGEST = "ext_addy_suggest";
+    private static final String PREF_ALIASES = "ext_addy_aliases";
+    private static final String PREF_ALIASES_AT = "ext_addy_aliases_at";
+    private static final String PREF_FLAGGED = "ext_addy_flagged";
     private static final String PREF_ACCOUNT = "ext_addy_account";
     private static final String PREF_CONFIRMED = "ext_addy_confirmed";
     private static final long ACCOUNT_FRESH_MS = 60 * 60 * 1000L;
@@ -99,6 +104,16 @@ public class AddyStore {
         return prefs(context).getBoolean(PREF_GUARD, true);
     }
 
+    /** Whether mail to an alias from a domain it doesn't expect is flagged. */
+    static boolean checkSenders(Context context) {
+        return prefs(context).getBoolean(PREF_SENDERS, true);
+    }
+
+    /** Whether an alias that expects no domain yet is offered the one it gets mail from. */
+    static boolean suggestSenders(Context context) {
+        return prefs(context).getBoolean(PREF_SUGGEST, true);
+    }
+
     static boolean warnDirect(Context context) {
         return prefs(context).getBoolean(PREF_WARN_DIRECT, true);
     }
@@ -120,7 +135,10 @@ public class AddyStore {
     /** Settings changed, so what's known about the account may no longer be right. */
     static void forget(Context context) {
         aliasesChanged();
-        prefs(context).edit().remove(PREF_ACCOUNT).remove(PREF_CONFIRMED).apply();
+        synchronized (AddyStore.class) {
+            knownAliases = null;
+        }
+        prefs(context).edit().remove(PREF_ACCOUNT).remove(PREF_CONFIRMED).remove(PREF_ALIASES).remove(PREF_ALIASES_AT).apply();
         PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(PREF_SET_UP, isSetUp(context)).apply();
     }
 
@@ -265,19 +283,116 @@ public class AddyStore {
     private static long aliasesFetchedAt;
     private static final long ALIASES_FRESH_MS = 5 * 60 * 1000L;
 
-    /** All your aliases, deleted ones included. Kept in memory for 5 minutes, and never written to storage. */
-    static synchronized List<AddyClient.Alias> aliases(Context context, boolean refresh) throws IOException {
-        if (aliasCache != null && !refresh && System.currentTimeMillis() - aliasesFetchedAt < ALIASES_FRESH_MS)
-            return new ArrayList<>(aliasCache);
+    /**
+     * All your aliases, deleted ones included. Kept in memory for 5 minutes. Their ids, addresses and descriptions
+     * are also saved, for checking who mail to them comes from while there's no network. They're fetched without
+     * holding the lock, as the message list asks this class about aliases while it's drawn.
+     */
+    static List<AddyClient.Alias> aliases(Context context, boolean refresh) throws IOException {
+        synchronized (AddyStore.class) {
+            if (aliasCache != null && !refresh && System.currentTimeMillis() - aliasesFetchedAt < ALIASES_FRESH_MS)
+                return new ArrayList<>(aliasCache);
+        }
         List<AddyClient.Alias> fresh = client(context).allAliases();
         List<String> emails = new ArrayList<>();
-        for (AddyClient.Alias alias : fresh)
+        JSONArray saved = new JSONArray();
+        for (AddyClient.Alias alias : fresh) {
             emails.add(alias.email);
-        // Listed by addy.io for your key, so these are yours.
-        rememberOwnAliases(context, emails);
-        aliasCache = fresh;
-        aliasesFetchedAt = System.currentTimeMillis();
+            try {
+                saved.put(new JSONObject().put("id", alias.id).put("email", alias.email)
+                        .put("description", alias.description == null ? "" : alias.description));
+            } catch (org.json.JSONException ignored) {
+            }
+        }
+        synchronized (AddyStore.class) {
+            // Listed by addy.io for your key, so these are yours.
+            rememberOwnAliases(context, emails);
+            aliasCache = fresh;
+            aliasesFetchedAt = System.currentTimeMillis();
+            knownAliases = fresh;
+            knownAt = aliasesFetchedAt;
+            prefs(context).edit().putString(PREF_ALIASES, saved.toString()).putLong(PREF_ALIASES_AT, knownAt).apply();
+        }
         return new ArrayList<>(fresh);
+    }
+
+    private static List<AddyClient.Alias> knownAliases;
+    private static long knownAt;
+    private static long knownTriedAt;
+    private static final long KNOWN_FRESH_MS = 12 * 60 * 60 * 1000L;
+    private static final long KNOWN_RETRY_MS = 10 * 60 * 1000L;
+
+    private static synchronized AddyClient.Alias find(Context context, String id, String email) {
+        if (knownAliases == null) {
+            SharedPreferences prefs = prefs(context);
+            knownAliases = new ArrayList<>();
+            knownAt = prefs.getLong(PREF_ALIASES_AT, 0);
+            try {
+                JSONArray saved = new JSONArray(prefs.getString(PREF_ALIASES, "[]"));
+                for (int i = 0; i < saved.length(); i++)
+                    knownAliases.add(AddyClient.Alias.from(saved.getJSONObject(i)));
+            } catch (Throwable ignored) {
+            }
+        }
+        for (AddyClient.Alias alias : knownAliases)
+            if ((id != null && id.equals(alias.id)) || AddyAddresses.sameAddress(alias.email, email))
+                return alias;
+        return null;
+    }
+
+    /** Whether it's time to fetch the list again: it's old or lacks the alias, and it wasn't just tried. */
+    private static synchronized boolean shouldRefresh(boolean missing) {
+        long now = System.currentTimeMillis();
+        if ((!missing && now - knownAt <= KNOWN_FRESH_MS) || now - knownTriedAt <= KNOWN_RETRY_MS)
+            return false;
+        knownTriedAt = now;
+        return true;
+    }
+
+    /**
+     * One of your aliases, by its id or address, from the saved list. The list is fetched again if it's old or
+     * doesn't have the alias, but not more than every ten minutes, and the saved one is used if that fails. Null if
+     * it isn't yours. Runs on a background thread.
+     */
+    static AddyClient.Alias knownAlias(Context context, String id, String email) {
+        AddyClient.Alias alias = find(context, id, email);
+        if (shouldRefresh(alias == null))
+            try {
+                aliases(context, true);
+                alias = find(context, id, email);
+            } catch (IOException ex) {
+                Log.w(ex);
+            }
+        return alias;
+    }
+
+    /** What was found wrong with an email, by its Message-ID, so it can be acted on and taken back. The last 300. */
+    static synchronized void flag(Context context, String msgid, String aliasId, String sender, AddySenders.Finding finding) {
+        try {
+            JSONObject flagged = new JSONObject(prefs(context).getString(PREF_FLAGGED, "{}"));
+            flagged.put(msgid, new JSONObject().put("alias", aliasId).put("sender", sender)
+                    .put("kind", finding.kind.name()).put("text", finding.text));
+            while (flagged.length() > 300)
+                flagged.remove(flagged.keys().next());
+            prefs(context).edit().putString(PREF_FLAGGED, flagged.toString()).apply();
+        } catch (org.json.JSONException ex) {
+            Log.w(ex);
+        }
+    }
+
+    static synchronized JSONObject flagged(Context context) {
+        try {
+            return new JSONObject(prefs(context).getString(PREF_FLAGGED, "{}"));
+        } catch (org.json.JSONException ex) {
+            return new JSONObject();
+        }
+    }
+
+    static synchronized void unflag(Context context, List<String> msgids) {
+        JSONObject flagged = flagged(context);
+        for (String msgid : msgids)
+            flagged.remove(msgid);
+        prefs(context).edit().putString(PREF_FLAGGED, flagged.toString()).apply();
     }
 
     /**

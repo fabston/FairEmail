@@ -1718,6 +1718,7 @@ public class AdapterMessage extends RecyclerView.Adapter<AdapterMessage.ViewHold
                 tvError.setVisibility(error == null ? View.GONE : View.VISIBLE);
                 ibError.setVisibility(error == null ? View.GONE : View.VISIBLE);
             }
+            ExtHooks.showWarningIcon(ibError, message); // Plus
 
             // Contact info
             ContactInfo[] info = ContactInfo.getCached(context,
@@ -5330,6 +5331,8 @@ public class AdapterMessage extends RecyclerView.Adapter<AdapterMessage.ViewHold
         }
 
         private void onHelp(TupleMessageEx message) {
+            if (ExtHooks.onWarningHelp(context, owner, message)) // Plus
+                return;
             if (message.error != null &&
                     message.error.contains("535 5.7.3 Authentication unsuccessful")) {
                 Intent intent = new Intent(context, ActivityError.class);

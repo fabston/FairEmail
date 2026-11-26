@@ -11,6 +11,7 @@ Set up under **Settings → Integrations → Extensions → addy.io**.
 - **Check before sending**: runs with FairEmail's own checks when you tap Send. If an email would show your real address, FairEmail's send dialog opens with the reasons at the top, and **Send** sends anyway. The rules are the same as the Betterbird add-on's: someone not going through the alias, a reply that dropped the alias, your real address or name in the text, signature, quoted mail or subject, the wrong sender identity, signing or encryption, a Reply-To, the Free plan, and optionally any email that doesn't go through an alias at all.
 - **Send from an alias**: in the compose screen, **⋮ → addy.io alias**. Pick or create an alias, and To is rewritten so addy.io sends from it, and the identity is switched to one addy.io accepts if needed.
 - **Readable alias addresses**: mail sent or received through one of your aliases shows who it really reaches. In the message list, `mail+support=safetywing.com@…` becomes addy.io's @ icon and `support@safetywing.com`. In an opened message, it reads `support@safetywing.com via mail@…`. Only what's shown changes, so replies still go through the alias. When you send through an alias, the send dialog says who it's to and which alias it's from, too.
+- **Warnings about unexpected senders**: put the domains an alias is for in its description on addy.io, like `main account 1password.com`. New mail to that alias from any other domain gets a warning in the list and in the email, as it may be fake, or the alias was leaked. Subdomains count, so `news.1password.com` passes, and an imitation such as `1passw0rd.com` or `1password.com.evil.io` is called out as one. Mail from the right domain that fails addy.io's DMARC check is flagged as possibly forged. The notification of flagged mail is marked too, with ⚠ before the sender. Tap the warning's icon to expect that sender from now on, which adds its domain to the description and takes the warning off, or to turn the alias off. An alias whose description names no domain gets a note offering its sender instead. Both can be turned off in the addy.io settings.
 - **The side menu's addy.io section**, shown only once an API key is set, below your folders. It does what the Alfred workflow's keywords do:
   - **addy.io aliases** (`addy`): search, filter by active, inactive, pinned or deleted, and see your plan, counts and bandwidth. Tap an alias for its actions: copy, send from it, pin, turn off or on, edit the description, delete or restore, open on addy.io. Long-press copies it.
   - **New alias** (`addnew`): a name or a random one in your chosen format, a description and a domain. The address is copied, and **Send from it** starts an email from it.
@@ -63,7 +64,9 @@ All extension code is in new files: `Addy*.java`, `Ai*.java`, `Gokapi*.java`, `E
 | `FragmentOptionsIntegrations.java` | Adds the Extensions card to the Integrations settings |
 | `ActivityView.java` | Adds the addy.io section to the side menu, and checks this fork's releases for updates instead of FairEmail's |
 | `app/src/github/.../ActivityBilling.java` | Lets a Pro code bought for FairEmail activate here too, as it's made for FairEmail's app ID |
-| `AdapterMessage.java` | Shows addresses through your aliases as who they really reach, in the message list and an opened message's header |
+| `AdapterMessage.java` | Shows addresses through your aliases as who they really reach, in the message list and an opened message's header, shows FairEmail's warning sign beside an extension's warning, and what can be done about it when that's tapped |
+| `Core.java` | Lets the extensions check a new message as it's stored, and add a warning to it |
+| `NotificationHelper.java` | Marks the notification of a message an extension warned about |
 | `app/build.gradle` | The `.plus` app ID, JUnit and org.json for the tests, a quoted native build flag, so it builds in a folder with a space in its name, and which GitHub build an app is, for its update check |
 
 To find them all: `git grep -n "Plus"` in those files.
@@ -129,6 +132,7 @@ Then `./gradlew assembleGithubRelease`. Keep the key safe: updates must be signe
 
 - Gmail and Outlook sign-in (OAuth) is registered to FairEmail itself, so it doesn't work in a fork. Use an app password, or IMAP and SMTP with a password, for those accounts.
 - The extensions' text is English only.
+- Senders are checked as mail arrives, so mail that was already there isn't. The check trusts the headers addy.io adds, so it only protects mail that really came through addy.io: someone who knows your real address could write to it directly and imitate them.
 - The check before sending runs when you tap Send in the compose screen. A reply typed straight into a notification, and replies FairEmail sends by itself from a rule, aren't checked.
 - The addy.io, AI writing and Gokapi settings, keys included, are in files of their own on the phone, not in FairEmail's settings. So they're not in FairEmail's log, debug info, exports or cloud sync, and you enter the keys again on a new phone.
 - Gokapi can't delete a file when you remove its link by hand, or discard the email, as Betterbird does: only **Undo** does. Otherwise it stays until it runs out of downloads or expires. It also doesn't offer a link by itself when you attach a large file: long-press the attachment.

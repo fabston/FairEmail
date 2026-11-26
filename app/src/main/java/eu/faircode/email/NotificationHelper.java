@@ -1090,6 +1090,8 @@ class NotificationHelper {
                     mbuilder.setContentText(TextHelper.normalizeNotification(context, message.subject));
             }
 
+            ExtHooks.addToNotification(context, mbuilder, message, from); // Plus
+
             if (info[0].hasPhoto())
                 mbuilder.setLargeIcon(info[0].getPhotoBitmap());
 

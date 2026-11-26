@@ -49,6 +49,8 @@ public class FragmentDialogAddySettings extends FragmentDialogBase {
         final SwitchCompat swGuard = view.findViewById(R.id.swGuard);
         final SwitchCompat swWarnDirect = view.findViewById(R.id.swWarnDirect);
         final EditText etTrusted = view.findViewById(R.id.etTrusted);
+        final SwitchCompat swSenders = view.findViewById(R.id.swSenders);
+        final SwitchCompat swSuggest = view.findViewById(R.id.swSuggest);
         final TextView tvResult = view.findViewById(R.id.tvResult);
 
         if (savedInstanceState == null) {
@@ -57,6 +59,8 @@ public class FragmentDialogAddySettings extends FragmentDialogBase {
             etServer.setText(AddyClient.DEFAULT_BASE_URL.equals(server) ? "" : server);
             swGuard.setChecked(AddyStore.guardEnabled(context));
             swWarnDirect.setChecked(AddyStore.warnDirect(context));
+            swSenders.setChecked(AddyStore.checkSenders(context));
+            swSuggest.setChecked(AddyStore.suggestSenders(context));
             etTrusted.setText(TextUtils.join("\n", AddyStore.trusted(context)));
         }
 
@@ -81,6 +85,8 @@ public class FragmentDialogAddySettings extends FragmentDialogBase {
                     .putString(AddyStore.PREF_URL, server)
                     .putBoolean(AddyStore.PREF_GUARD, swGuard.isChecked())
                     .putBoolean(AddyStore.PREF_WARN_DIRECT, swWarnDirect.isChecked())
+                    .putBoolean(AddyStore.PREF_SENDERS, swSenders.isChecked())
+                    .putBoolean(AddyStore.PREF_SUGGEST, swSuggest.isChecked())
                     .putString(AddyStore.PREF_TRUSTED, TextUtils.join("\n", trusted))
                     .apply();
             AddyStore.forget(context);

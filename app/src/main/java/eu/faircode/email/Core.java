@@ -4944,6 +4944,8 @@ class Core {
                     message.warning = Log.formatThrowable(ex, false);
                 }
 
+            ExtHooks.checkIncoming(context, message, imessage); // Plus
+
             boolean check_blocklist = prefs.getBoolean("check_blocklist", false);
             if (check_blocklist) {
                 if (!have &&

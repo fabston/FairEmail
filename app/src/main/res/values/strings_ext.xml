@@ -31,6 +31,10 @@
     <string name="ext_addy_create_alias" translatable="false">Create</string>
     <string name="ext_addy_start_email" translatable="false">Start email</string>
     <string name="ext_addy_send_from_it" translatable="false">Send from it</string>
+    <string name="ext_addy_senders" translatable="false">Warn about unexpected senders</string>
+    <string name="ext_addy_senders_hint" translatable="false">Put the domains an alias is for in its description on addy.io, like \"main account 1password.com\". New mail to it from anywhere else gets a warning, as it may be fake, or the alias was leaked. Tap the warning\'s icon to expect that sender, or to turn the alias off.</string>
+    <string name="ext_addy_suggest" translatable="false">Suggest a sender for aliases without one</string>
+    <string name="ext_addy_suggest_hint" translatable="false">Mail to an alias whose description names no domain gets a note offering to expect its sender, so you needn\'t edit every description by hand.</string>
     <string name="ext_ai_title" translatable="false">AI writing</string>
     <string name="ext_ai_summary" translatable="false">Fix, improve, shorten, change the tone of or translate what you write, with OpenAI or Claude and your own API key.</string>
     <string name="ext_ai_rewrite" translatable="false">Rewrite with AI</string>

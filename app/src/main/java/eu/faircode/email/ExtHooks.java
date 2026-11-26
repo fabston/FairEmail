@@ -19,6 +19,7 @@ package eu.faircode.email;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
@@ -37,6 +38,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -50,6 +52,8 @@ import android.graphics.drawable.Drawable;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.widget.ImageViewCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.RecyclerView;
@@ -57,6 +61,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.core.widget.TextViewCompat;
 import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,6 +71,7 @@ import java.util.Map;
 
 import javax.mail.Address;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 /**
  * Where FairEmail Plus's extensions plug into FairEmail. FairEmail's own files only call these, from a line or two
@@ -526,6 +532,50 @@ public class ExtHooks {
                     }
                 }
         return result;
+    }
+
+    // --- Receiving mail ------------------------------------------------------------------------------------------
+
+    /**
+     * Lets the extensions check a new message as FairEmail stores it, on its background thread, with all of its
+     * headers at hand. They can add a warning, which FairEmail shows as its own. A check that fails changes nothing.
+     */
+    static void checkIncoming(Context context, EntityMessage message, MimeMessage imessage) {
+        try {
+            AddyIncoming.check(context, message, imessage);
+        } catch (Throwable ex) {
+            Log.w(ex);
+        }
+    }
+
+    /**
+     * The button beside a message's warning is FairEmail's warning sign for an extension's warning, and FairEmail's
+     * own question mark otherwise, as rows are reused.
+     */
+    static void showWarningIcon(ImageButton ibError, EntityMessage message) {
+        // Rows without a warning don't show the button, so there's nothing to set.
+        if (ibError == null || ibError.getVisibility() != View.VISIBLE)
+            return;
+        boolean warns = AddySenders.warns(message.warning);
+        Context context = ibError.getContext();
+        ibError.setImageResource(warns ? R.drawable.twotone_warning_24 : R.drawable.twotone_help_24);
+        ImageViewCompat.setImageTintList(ibError, ColorStateList.valueOf(Helper.resolveColor(context,
+                warns ? R.attr.colorWarning : androidx.appcompat.R.attr.colorAccent)));
+    }
+
+    /**
+     * Marks a new message's notification if an extension warned about it: a sign before who it's from, and what's
+     * wrong in a word or two beside the app's name. The subject and preview stay as they are.
+     */
+    static void addToNotification(Context context, NotificationCompat.Builder builder, EntityMessage message, String from) {
+        String label = AddyIncoming.notificationLabel(context, message);
+        if (label != null)
+            builder.setSmallIcon(R.drawable.twotone_warning_24).setContentTitle("\u26A0 " + from).setSubText(label);
+    }
+
+    /** True if a message's warning is an extension's, which then shows what can be done about it. */
+    static boolean onWarningHelp(Context context, LifecycleOwner owner, EntityMessage message) {
+        return AddyIncoming.showActions(context, owner, message);
     }
 
     // --- Side menu ----------------------------------------------------------------------------------------------
